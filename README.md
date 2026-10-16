@@ -66,7 +66,7 @@ The model receives **no executable tools**. Model responses and imported documen
 
 ## Build from source
 
-Use Android Studio with JDK 17, Android SDK 35 and Gradle 8.11.1, or install Gradle 8.11.1 and run:
+Use Android Studio with JDK 17, Android SDK 35 and Gradle 9.3.1, or install Gradle 9.3.1 and run:
 
 ```bash
 git clone https://github.com/Vishnu063/-Friday-personal-assistant.git

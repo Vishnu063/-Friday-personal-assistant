@@ -1,6 +1,6 @@
 # Contributing to Friday
 
-Keep changes focused and explain the resulting user behaviour. Build with JDK 17, SDK 35, Gradle 8.11.1:
+Keep changes focused and explain the resulting user behaviour. Build with JDK 17, SDK 35, Gradle 9.3.1:
 
 ```bash
 gradle testDebugUnitTest lintDebug assembleDebug
