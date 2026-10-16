@@ -9,6 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import java.io.File
 
 class FridayModel(application: Application) : AndroidViewModel(application) {
     val store = Store(application)
@@ -28,6 +31,59 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var draftDocument by mutableStateOf("")
     var resume by mutableStateOf(prefs.getString("resume", "").orEmpty()); private set
     var accentMint by mutableStateOf(prefs.getBoolean("mint", false)); private set
+    var privacyMode by mutableStateOf(false); private set
+    var trash by mutableStateOf(store.entries(trash = true)); private set
+    var lastDeleted by mutableStateOf<Entry?>(null); private set
+    var offlineVoice by mutableStateOf(prefs.getBoolean("offlineVoice", false)); private set
+    var speechRate by mutableFloatStateOf(prefs.getFloat("speechRate", 1f)); private set
+    var modelProgress by mutableStateOf(""); private set
+    var modelDiagnostic by mutableStateOf("Not tested on this phone yet"); private set
+    private var modelJob: Job? = null
+    fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = if (value) emptyList() else store.chats(); speechText = "" } }
+    fun offlineVoice(value: Boolean) { offlineVoice = value; prefs.edit().putBoolean("offlineVoice", value).apply() }
+    fun rate(value: Float) { speechRate = value.coerceIn(.6f, 1.4f); prefs.edit().putFloat("speechRate", speechRate).apply() }
+    fun restoreItem(entry: Entry) { store.restore(entry.id); lastDeleted = null; refresh(); reschedule() }
+    fun emptyTrash() { store.emptyTrash(); lastDeleted = null; refresh() }
+    private fun reschedule() { store.pendingTasks().forEach { runCatching { Reminders.schedule(getApplication(), it.id, it.due) } } }
+    fun restoreBackup(data: BackupData) {
+        if (busy) return
+        val count = store.import(data)
+        if (data.resume.isNotBlank()) resume(data.resume)
+        refresh(); if (!privacyMode) messages = store.chats(); reschedule()
+        notice = "Restored $count new items. Duplicates skipped. Future task reminders scheduled; notification permission is still required."
+    }
+    fun saveStructured(kind: String, fields: Map<String, String>) { save(kind, org.json.JSONObject(fields).toString()) }
+    fun updateStructured(entry: Entry, key: String, value: String) { val json = runCatching { org.json.JSONObject(entry.text) }.getOrNull() ?: return; json.put(key, value); edit(entry, json.toString()) }
+    fun cancelModelOperation() { modelJob?.cancel(); brain.stop() }
+    fun downloadModel(url: String, checksum: String) {
+        if (busy) return
+        busy = true; modelProgress = "Connecting…"
+        modelJob = viewModelScope.launch {
+            val file = File(getApplication<Application>().filesDir, "model.download")
+            try {
+                ModelDownload.fetch(url, checksum, file) { done, total -> withContext(Dispatchers.Main) { modelProgress = if (total > 0) "${done * 100 / total}% • ${done / 1048576} MB" else "${done / 1048576} MB downloaded" } }
+                brain.installDownloaded(file)
+                modelName = "Downloaded .litertlm model"; prefs.edit().putString("model", modelName).apply()
+                modelDiagnostic = "Imported; run compatibility test"; notice = "Downloaded and installed. ${if (checksum.isBlank()) "No provider checksum supplied; integrity was not independently verified." else "SHA-256 verified."} Run the model test."
+            } catch (_: CancellationException) { notice = "Download cancelled. Previous model preserved." }
+            catch (error: Exception) { notice = error.message?.take(220).orEmpty() }
+            finally { file.delete(); busy = false; modelProgress = "" }
+        }
+    }
+    fun testModel() {
+        if (busy) return
+        busy = true; modelDiagnostic = "Loading and generating…"
+        viewModelScope.launch {
+            val start = android.os.SystemClock.elapsedRealtime()
+            var first = 0L
+            try {
+                brain.answer("Reply with one word: Ready", emptyList(), emptyList()) { if (first == 0L) first = android.os.SystemClock.elapsedRealtime() - start }
+                modelDiagnostic = "Compatibility test passed • first text ${first}ms • total ${android.os.SystemClock.elapsedRealtime() - start}ms. Quality not assessed."
+            } catch (error: Exception) { modelDiagnostic = "Test failed: ${error.message?.take(150)}" }
+            catch (_: LinkageError) { modelDiagnostic = "Native runtime is unavailable on this device." }
+            finally { busy = false }
+        }
+    }
     init { store.pendingTasks().forEach { runCatching { Reminders.schedule(application, it.id, it.due) } } }
     fun onboard() { onboarded = true; prefs.edit().putBoolean("onboarded", true).apply() }
     fun language(value: String) { language = value; prefs.edit().putString("language", value).apply() }
@@ -35,14 +91,15 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun memory(value: Boolean) { useMemory = value; prefs.edit().putBoolean("memory", value).apply() }
     fun theme(value: Boolean) { accentMint = value; prefs.edit().putBoolean("mint", value).apply() }
     fun resume(value: String) { resume = value.take(12000); prefs.edit().putString("resume", resume).apply() }
-    fun refresh() { entries = store.entries() }
+    fun refresh() { entries = store.entries(); trash = store.entries(trash = true) }
     fun save(kind: String, text: String, due: Long = 0) {
         if (text.isBlank()) { notice = "Enter something to save."; return }
         val id = store.add(kind, text.trim(), due)
         if (due > 0) runCatching { Reminders.schedule(getApplication(), id, due) }.onFailure { notice = "Task saved, but Android could not schedule its reminder." }
         refresh()
     }
-    fun delete(entry: Entry) { Reminders.cancel(getApplication(), entry.id); store.delete(entry.id); refresh() }
+    fun delete(entry: Entry) { Reminders.cancel(getApplication(), entry.id); store.delete(entry.id); lastDeleted = entry; refresh() }
+    fun reschedule(entry: Entry, due: Long) { Reminders.cancel(getApplication(), entry.id); store.reschedule(entry.id, due); refresh(); reschedule() }
     fun toggle(entry: Entry) {
         store.toggle(entry)
         if (!entry.done) Reminders.cancel(getApplication(), entry.id)
@@ -50,9 +107,10 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         refresh()
     }
     fun edit(entry: Entry, text: String) { if (text.isNotBlank()) { store.edit(entry, text.trim()); refresh() } }
-    fun reply(text: String, persist: Boolean = true) {
-        messages = (messages + ChatLine("Friday", text)).takeLast(100)
-        if (persist) store.chat("Friday", text)
+    fun reply(text: String, persist: Boolean = true, ai: Boolean = false) {
+        val role = if (ai) "Friday • AI suggestion" else "Friday"
+        messages = (messages + ChatLine(role, text)).takeLast(100)
+        if (persist && !privacyMode) store.chat(role, text)
         speechText = ""; speechText = text
     }
     fun briefing(): String {
@@ -61,14 +119,15 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     }
     fun ask(question: String, ephemeral: Boolean = false) {
         if (busy || question.isBlank()) return
-        val history = store.chats()
+        val privateTurn = ephemeral || privacyMode
+        val history = if (privateTurn) emptyList() else store.chats()
         messages = (messages + ChatLine("You", if (ephemeral) "Explain selected content (not saved)" else question)).takeLast(100)
-        if (!ephemeral) store.chat("You", question)
+        if (!privateTurn) store.chat("You", question)
         busy = true; streaming = ""
         viewModelScope.launch {
             try {
-                val answer = brain.answer(question, if (ephemeral) emptyList() else history, if (useMemory && !ephemeral) entries.filter { it.kind == "memory" } else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
-                reply(answer, !ephemeral)
+                val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) entries.filter { it.kind == "memory" } else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
+                reply(answer, !privateTurn, ai = true)
             } catch (error: Exception) { notice = error.message?.take(240) ?: "Model could not answer. Try a smaller compatible model." }
             catch (error: LinkageError) { notice = "The local AI runtime is not compatible with this device. Other tools remain available." }
             finally { busy = false; streaming = "" }
@@ -76,11 +135,12 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     }
     fun importModel(uri: Uri) {
         if (busy) return
-        busy = true; notice = "Importing model… keep Friday open. Large files take time."
-        viewModelScope.launch {
-            try { modelName = brain.import(uri); prefs.edit().putString("model", modelName).apply(); notice = "Model imported. Send a short message in Chat to test it on your phone." }
+        busy = true; modelProgress = "Importing…"; notice = "Importing model… keep Friday open. Large files take time."
+        modelJob = viewModelScope.launch {
+            try { modelName = brain.import(uri) { bytes -> withContext(Dispatchers.Main) { modelProgress = "${bytes / 1048576} MB imported" } }; modelDiagnostic = "Imported; run compatibility test"; prefs.edit().putString("model", modelName).apply(); notice = "Model imported. Send a short message in Chat to test it on your phone." }
+            catch (_: CancellationException) { notice = "Import cancelled." }
             catch (error: Exception) { notice = error.message ?: "Model import failed." }
-            finally { busy = false }
+            finally { busy = false; modelProgress = "" }
         }
     }
     fun removeModel() {
@@ -96,8 +156,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun erasePersonalData() {
         if (busy) return
         entries.forEach { Reminders.cancel(getApplication(), it.id) }
-        store.clear(); messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
-        notice = "Chats, notes, tasks, memories and resume erased. Remove the model separately in Settings."
+        store.clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
+        notice = "Chats, notes, tasks, memories, trash, career/project/practice data and resume erased. Remove the model separately in Settings."
     }
     override fun onCleared() {
         brain.stop()

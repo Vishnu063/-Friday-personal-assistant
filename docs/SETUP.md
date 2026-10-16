@@ -16,7 +16,7 @@ Try a short message. If loading fails, keep using basic tools, remove the incomp
 
 ## Voice
 
-Tap the microphone; read the provider disclosure; grant microphone permission. Choose English or Hindi in Settings. TTS voices/language packs are managed in Android settings. A provider without on-device support can send audio/text to its own servers. Android's offline preference is a preference, not a guarantee of offline processing. Friday itself requests no internet permission.
+Tap the microphone; read the provider disclosure; grant microphone permission. Choose English or Hindi in Settings. TTS voices/language packs are managed in Android settings. A provider without on-device support can send audio/text to its own servers. Android's offline preference is a preference, not a guarantee of offline processing. Friday 0.2 requests internet permission only for the explicit model downloader; chat and screen data are not uploaded.
 
 Toggle **Conversation**, then tap the mic to begin. After a spoken reply finishes, listening starts again while Friday stays foreground. Tap mic to interrupt speech, or disable Conversation to stop the loop. Recognition errors require a manual retry. There is no wake word or background listening. ChatGPT-like naturalness/latency is not guaranteed by this system-service implementation.
 
@@ -46,4 +46,4 @@ Use Tools to import PDF/text or an image, or launch the phone camera for a previ
 
 ## Data
 
-Settings → Export saves personal data as plaintext JSON to a location you choose. Restore is not yet supported. Erase personal data clears the local database and saved resume; remove the model separately. Uninstall removes Friday's private data, but not exported files or copies held by selected external apps.
+Settings → Export saves personal data as plaintext JSON to a location you choose. Restore is available in Settings; see [v0.2 guide](VERSION_0_2.md). Erase personal data clears the local database and saved resume; remove the model separately. Uninstall removes Friday's private data, but not exported files or copies held by selected external apps.

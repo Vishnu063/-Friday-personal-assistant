@@ -9,10 +9,20 @@ android {
         applicationId = "com.friday.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    val releaseKey = System.getenv("FRIDAY_KEYSTORE_FILE")
+    if (!releaseKey.isNullOrBlank()) {
+        signingConfigs.create("privateRelease") {
+            storeFile = file(releaseKey)
+            storePassword = System.getenv("FRIDAY_STORE_PASSWORD")
+            keyAlias = System.getenv("FRIDAY_KEY_ALIAS")
+            keyPassword = System.getenv("FRIDAY_KEY_PASSWORD")
+        }
+        buildTypes.getByName("release") { signingConfig = signingConfigs.getByName("privateRelease") }
     }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -38,3 +48,16 @@ dependencies {
 }
 
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+
+dependencies { testImplementation("org.json:json:20240303") }
+
+val verifyReleaseSigning by tasks.registering {
+    doLast {
+        check(listOf("FRIDAY_KEYSTORE_FILE", "FRIDAY_STORE_PASSWORD", "FRIDAY_KEY_ALIAS", "FRIDAY_KEY_PASSWORD").all { !System.getenv(it).isNullOrBlank() }) {
+            "Configure private release-signing secrets first. Unsigned release distribution is disabled."
+        }
+    }
+}
+tasks.matching { it.name == "packageRelease" }.configureEach { dependsOn(verifyReleaseSigning) }
+
+dependencies { testImplementation("org.robolectric:robolectric:4.14.1") }

@@ -23,3 +23,15 @@ This checklist is intentionally separate from CI. A successful APK build is not 
 - [ ] Export only intended persisted data; erase cancels reminders and clears resume/chat/items; model removal releases resources.
 
 Record model name, phone model, RAM, Android version, first-token latency, errors and test results in issues. Do not attach private screen text or model files.
+
+## v0.2 regression checks
+
+- [ ] Upgrade a populated v1 database without losing items.
+- [ ] Private chat is absent from export, saved history and subsequent normal context. Explicit saves are documented.
+- [ ] Delete/Undo/Trash/Restore preserve content and completion state; alarms cancel/reschedule correctly.
+- [ ] Restore v1 and v2 backups; malformed files make no changes; duplicate merge is idempotent.
+- [ ] Model download progress, cancel, no-space, checksum mismatch and failed model test recover clearly. Verify no personal payload is sent.
+- [ ] Voice interruption ignores old playback callbacks; strict offline mode fails clearly when required language services are unavailable.
+- [ ] Job stages/follow-ups, spoken interview answers/revision and editable project next steps survive restart.
+- [ ] Screen/action preview text matches the selected action; cancelling never dispatches it.
+- [ ] Signed releases reuse the privately configured key and a higher versionCode; debug-to-release migration restores exported data.

@@ -23,3 +23,7 @@ VoiceStudio was reviewed as a reference, but its desktop Python backends are not
 ## Build
 
 Pinned Android Gradle plugin 9.1.1, Gradle 9.3.1, JDK 17, built-in Kotlin upgraded to 2.4.21 and matching Compose compiler (required by LiteRT-LM 0.18 metadata), compile/target SDK 35. ARM64 packaging. The workflow builds a debug-signed preview, runs JVM command-boundary tests and Android lint, then uploads APK and reports. It cannot certify model latency, reminders or accessibility behaviour without a phone.
+
+## 0.2 additions
+
+`Backup` validates the full file before Store performs a transactional, deduplicated merge. Schema v2 soft-deletes records; active queries and model memory exclude trash. `ModelDownload` is an explicit, cancellable HTTPS-only file transfer with size/disk bounds and optional expected SHA-256. It never receives chat or resume text. `Coach` supplies transparent interview checklists; `PersonalTools` renders job stages and manual project checkpoints. Privacy mode excludes chat persistence and saved context; explicit Save remains explicit. Release signing uses owner-provided secrets only, with a missing-secret build guard.

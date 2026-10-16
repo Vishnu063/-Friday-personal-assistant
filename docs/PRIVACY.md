@@ -1,33 +1,31 @@
-# Privacy and action boundaries
+# Privacy and action boundaries — v0.2
 
-Friday has no analytics SDK, cloud LLM client or direct network permission. LiteRT-LM runs the imported model on-device. Android services (speech/TTS), the browser, model catalogue website, and apps you open are separate providers with their own data handling. No claim is made that every external provider is offline.
+Friday's chat model runs on your phone. There is no cloud LLM client or chat-upload feature. **v0.2 adds internet permission solely for an optional model-file download that you explicitly review and start.** No background model download, analytics client or chat/screen/resume upload is implemented. Android speech/TTS, browsers and apps you open have their own provider policies.
 
-## Stored locally
+## Private chat
 
-- Up to 100 chat messages; up to 500 listed personal items (older items remain stored until erased).
-- User-created notes, tasks, reminders, preferences and tracked application labels.
-- Saved resume text, UI/language options, imported AI model.
+The Chat privacy switch clears the displayed session, excludes new chat turns from SQLite history and excludes saved preferences/recent saved chat from those AI prompts. Turning privacy off restores the saved chat view. Private messages remain temporarily in process memory while displayed; this is not secure memory wiping. Selecting explicit Save actions still persists the selected note/task/preference/practice entry. Export contains persisted data only. Private document/screen explanations also remain excluded from saved history and subsequent context.
 
-Android private SQLite/preferences/files are used, cloud backup is disabled. This is not a separately encrypted vault. Explicit personal data exports are plaintext JSON. Device security and OS storage protections still matter.
+## Stored data and recovery
 
-## Temporary data
+Private SQLite stores active notes/tasks/preferences/jobs/checkpoints/practice and up to 100 saved chat messages. Settings/resume and imported AI model stay in private app storage. Cloud backup is disabled. This is not an independently encrypted vault.
 
-- Screen preview, selected document/OCR text, and private explanation exchanges live only in process memory and are excluded from database chat history and future chat context.
-- Android process termination clears those in-memory fields; backgrounding alone does not guarantee immediate erasure.
-- Selecting “Save as resume” explicitly persists extracted text. Read-aloud uses the selected Android TTS provider.
+Delete moves an item to trash and cancels its task alarm. Undo/Restore recovers it and schedules future reminders. Trashed items are excluded from AI preferences and JSON backups; they remain locally recoverable until Empty trash or Erase personal data. Erase clears all items, trash, chats and resume; model removal is separate. Exported files and external-app copies need separate deletion.
 
-## Screen service
+JSON backups are plaintext. Restore validates size, schema, item kinds, lengths, chat roles and limits before any database mutation, previews the merge and imports in a transaction with duplicate checks. Models, keys, Android permissions, network endpoints and executable settings are never restored. A non-empty restored resume replaces the saved resume after confirmation. Future restored task reminders are scheduled only after confirmation, subject to Android permission and battery rules.
 
-Android grants persistent Accessibility access, but Friday's own read capability requires a device authentication and a 60-second one-shot grant plus a user shortcut tap. No text is harvested in `onAccessibilityEvent`. Password fields are skipped; non-password sensitive text may still appear. No gestures, screenshots, keylogging, arbitrary clicking or automated interaction with other apps.
+## Explicit model download
 
-Lock/power actions are only dispatched after fresh platform credential/biometric approval. The model has no tools, cannot grant permission and cannot execute code. Browser/document/screen text and AI output cannot enter the deterministic command parser. Direct user voice recognition still has recognition errors; Android authentication protects sensitive actions.
+Only Settings → Review download → Download starts network transfer. Use trusted HTTPS model-file URLs and preferably a provider SHA-256. Credentials are not attached to requests. HTTPS redirects are bounded and revalidated; failed, cancelled, oversized or checksum-mismatched transfers are discarded. A completed download replaces the private imported model; actual runtime compatibility still needs the on-phone test. A missing expected hash means no independent integrity verification. Gated models should use a browser download + file import; no provider login/token handling is implemented. Model providers/CDNs see your IP and request URL. Mobile-data charges may apply.
 
-Friday does not create or check spoken-password credentials. Phone-control commands containing a spoken password are rejected before chat persistence. Do not put account secrets in memory or chat. Use your Android PIN/fingerprint rather than “pass 50”. Calls and SMS are handed to the dialer/composer for final confirmation.
+## Voice
 
-## Erasure and export
+Foreground voice only; no microphone service or wake word. Delayed recognition/playback callbacks are ignored after stop/new sessions. Strict offline mode requires on-device Android recognition and an installed offline TTS voice, otherwise the app asks you to type/install a voice. Availability of an Android language pack remains device/provider dependent. In normal mode providers may use the internet; read-aloud sends text to your selected TTS engine. This system-service voice is not a guarantee of ChatGPT voice quality.
 
-Clear chat deletes persisted chat history. Erase personal data deletes stored items/chats and saved resume and cancels known reminders, but leaves model/settings. Remove AI model deletes the private imported model copy. Uninstall removes app data. Exports and external app copies must be deleted separately. No restore is currently provided.
+## Screen and phone actions
 
-## Distribution
+Android Accessibility permission is persistent until revoked, but Friday reads text only after a fresh device-authenticated, 60-second one-shot grant and a user accessibility-shortcut tap. No text is read in screen-event callbacks. Password nodes are skipped; other sensitive visible text may still appear. Review/edit the preview before explaining or reading aloud. No screenshots, gestures, keylogging or automatic clicking are performed.
 
-This is a sideloaded personal preview. Store distribution requires a separate review of accessibility disclosures, data safety, permissions, release signing and applicable distribution rules. No store approval is asserted.
+Lock and power-menu actions have an explicit preview followed by fresh Android PIN/password/strong-biometric confirmation. Power off still needs your tap in Android's menu. Spoken-password phone commands are rejected before chat persistence. Model output and imported files cannot enter the direct command router, and the model has no executable tools.
+
+Calls/SMS open the dialer/composer for final user confirmation. Career search opens your browser; job postings are not automatically fetched or applied to. Project checkpoints are manually saved, not silently read from GitHub.

@@ -1,0 +1,55 @@
+name: Signed Android release
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: friday-signed-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: release
+    env:
+      FRIDAY_KEYSTORE_BASE64: ${{ secrets.FRIDAY_KEYSTORE_BASE64 }}
+      FRIDAY_STORE_PASSWORD: ${{ secrets.FRIDAY_STORE_PASSWORD }}
+      FRIDAY_KEY_ALIAS: ${{ secrets.FRIDAY_KEY_ALIAS }}
+      FRIDAY_KEY_PASSWORD: ${{ secrets.FRIDAY_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+      - name: Prepare private signing key
+        run: |
+          python - <<'PY'
+          import os, base64, pathlib
+          names = ['FRIDAY_KEYSTORE_BASE64', 'FRIDAY_STORE_PASSWORD', 'FRIDAY_KEY_ALIAS', 'FRIDAY_KEY_PASSWORD']
+          if any(not os.environ.get(name) for name in names):
+              raise SystemExit('Missing release-signing secrets. See docs/RELEASE_SIGNING.md. No release will be generated.')
+          key = pathlib.Path(os.environ['RUNNER_TEMP']) / 'friday-release.jks'
+          key.write_bytes(base64.b64decode(os.environ['FRIDAY_KEYSTORE_BASE64'], validate=True))
+          key.chmod(0o600)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'FRIDAY_KEYSTORE_FILE={key}\n')
+          PY
+      - name: Verify and build signed release
+        run: gradle testDebugUnitTest lintRelease assembleRelease --stacktrace
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: friday-signed-release
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Remove private key from runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/friday-release.jks"
