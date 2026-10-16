@@ -22,4 +22,4 @@ VoiceStudio was reviewed as a reference, but its desktop Python backends are not
 
 ## Build
 
-Pinned Android Gradle plugin 8.9.2, Gradle 8.11.1, JDK 17, Kotlin/Compose compiler 2.2.20, compile/target SDK 35. ARM64 packaging. The workflow builds a debug-signed preview, runs JVM command-boundary tests and Android lint, then uploads APK and reports. It cannot certify model latency, reminders or accessibility behaviour without a phone.
+Pinned Android Gradle plugin 8.9.2, Gradle 8.11.1, JDK 17, Kotlin/Compose compiler 2.4.21 with R8/D8 9.1.29 (required by LiteRT-LM 0.18 metadata), compile/target SDK 35. ARM64 packaging. The workflow builds a debug-signed preview, runs JVM command-boundary tests and Android lint, then uploads APK and reports. It cannot certify model latency, reminders or accessibility behaviour without a phone.

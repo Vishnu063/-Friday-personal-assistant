@@ -18,6 +18,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
     private var recognizer: SpeechRecognizer? = null
     private var ready = false
     private var closed = false
+    private var session = 0
     var foreground = true
     var conversation = false
     var language = "en-IN"
@@ -32,6 +33,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
     }
     fun listen() {
         if (!foreground || closed) return
+        val currentSession = ++session
         handler.removeCallbacksAndMessages(null)
         tts.stop()
         recognizer?.cancel(); recognizer?.destroy()
@@ -45,6 +47,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
             override fun onEndOfSpeech() { status("Transcribing…") }
             override fun onError(error: Int) { status(when (error) { SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Didn't catch that. Tap mic to retry."; SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission is needed for voice."; else -> "Voice unavailable (code $error). Try typing or changing language." }) }
             override fun onResults(results: Bundle?) {
+                if (!foreground || closed || currentSession != session) return
                 status("Ready")
                 results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let(result)
             }
@@ -62,6 +65,6 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
         if (availability < 0) { status("Install the $language voice in Android TTS settings."); return }
         tts.speak(text.take(3900), TextToSpeech.QUEUE_FLUSH, null, "friday-reply")
     }
-    fun stop() { conversation = false; handler.removeCallbacksAndMessages(null); recognizer?.cancel(); tts.stop(); status("Ready") }
+    fun stop() { session++; conversation = false; handler.removeCallbacksAndMessages(null); recognizer?.cancel(); tts.stop(); status("Ready") }
     fun destroy() { stop(); closed = true; recognizer?.destroy(); tts.shutdown() }
 }
