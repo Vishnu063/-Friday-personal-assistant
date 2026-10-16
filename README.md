@@ -8,7 +8,7 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**Previous v0.1 verified preview:** [download the successful APK build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049/artifacts/12071949079). Tests, lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing remains pending.
+**Verified v0.2 preview:** [download Friday 0.2.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38962566082/artifacts/12072599894). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
 
 ## New in 0.2
 
