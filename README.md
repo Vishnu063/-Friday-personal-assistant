@@ -1,10 +1,14 @@
 # Friday — your personal Android assistant
 
+[![Android APK](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml/badge.svg)](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml)
+
 A calm, private space to talk, remember, plan and get things done. **No Ollama, OpenClaw, paid AI API key or always-on computer required.**
 
 > **Early Android preview (0.1).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
+
+**Verified preview:** [download the successful APK build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049/artifacts/12071949079). Tests, lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing remains pending.
 
 ## Get started on your phone
 
