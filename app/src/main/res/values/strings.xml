@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Friday</string>
+    <string name="accessibility_description">Optional screen tools. Friday reads visible, non-password text only when you tap Android’s accessibility button after authenticating in Friday. Reading expires after 60 seconds. It does not record screens, click buttons, or save screen text. Lock and power-menu actions require device authentication in Friday. Disable this service anytime in Android Settings.</string>
+    <style name="Theme.Friday" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#10121D</item>
+        <item name="android:navigationBarColor">#10121D</item>
+        <item name="android:colorAccent">#B7A1FF</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
