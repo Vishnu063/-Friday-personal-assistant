@@ -28,6 +28,13 @@ class Store(context: Context) : SQLiteOpenHelper(context, "friday.db", null, 1) 
         return id
     }
     fun toggle(entry: Entry) = writableDatabase.update("entries", ContentValues().apply { put("done", if (entry.done) 0 else 1) }, "id=?", arrayOf(entry.id))
+    fun edit(entry: Entry, text: String) = writableDatabase.update("entries", ContentValues().apply { put("text", text.take(16000)) }, "id=?", arrayOf(entry.id))
+    fun pendingTasks(): List<Entry> = readableDatabase.rawQuery("SELECT id,kind,text,done,due FROM entries WHERE kind='task' AND done=0 AND due>?", arrayOf(System.currentTimeMillis().toString())).use { cursor ->
+        buildList { while (cursor.moveToNext()) add(Entry(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getInt(3) != 0, cursor.getLong(4))) }
+    }
+    fun find(id: String): Entry? = readableDatabase.rawQuery("SELECT id,kind,text,done,due FROM entries WHERE id=?", arrayOf(id)).use { cursor ->
+        if (cursor.moveToFirst()) Entry(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getInt(3) != 0, cursor.getLong(4)) else null
+    }
     fun delete(id: String) = writableDatabase.delete("entries", "id=?", arrayOf(id))
     fun chats(): List<ChatLine> = readableDatabase.rawQuery("SELECT role,text FROM (SELECT * FROM chats ORDER BY id DESC LIMIT 100) ORDER BY id", null).use { cursor ->
         buildList { while (cursor.moveToNext()) add(ChatLine(cursor.getString(0), cursor.getString(1))) }

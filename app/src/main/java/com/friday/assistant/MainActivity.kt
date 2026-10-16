@@ -83,7 +83,7 @@ class MainActivity : FragmentActivity() {
     }
     private val exportPicker = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
-            val snapshot = vm.store.export()
+            val snapshot = org.json.JSONObject(vm.store.export()).put("resume", vm.resume).toString(2)
             lifecycleScope.launch {
                 runCatching { withContext(Dispatchers.IO) { contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(snapshot) } ?: error("Cannot write file") } }
                     .onSuccess { vm.notice = "Export saved. It contains your personal data; share carefully." }.onFailure { vm.notice = "Export failed. Try a different folder." }
@@ -159,6 +159,7 @@ class MainActivity : FragmentActivity() {
             is Command.Search -> if (command.query.isNotBlank()) open(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=" + Uri.encode(command.query))))
             is Command.Open -> chooseApp(command.name)
             is Command.Dial -> open(Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", command.number, null)))
+            Command.VoicePassword -> { vm.notice = "Spoken passwords are not accepted or saved. Say 'lock my phone' and confirm using Android PIN or fingerprint." }
             Command.Chat -> vm.ask(raw)
         }
     }

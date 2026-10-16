@@ -22,7 +22,7 @@ Android grants persistent Accessibility access, but Friday's own read capability
 
 Lock/power actions are only dispatched after fresh platform credential/biometric approval. The model has no tools, cannot grant permission and cannot execute code. Browser/document/screen text and AI output cannot enter the deterministic command parser. Direct user voice recognition still has recognition errors; Android authentication protects sensitive actions.
 
-There are no stored spoken passwords. Do not put account secrets in memory or chat. Use your Android PIN/fingerprint rather than “pass 50”. Calls and SMS are handed to the dialer/composer for final confirmation.
+Friday does not create or check spoken-password credentials. Phone-control commands containing a spoken password are rejected before chat persistence. Do not put account secrets in memory or chat. Use your Android PIN/fingerprint rather than “pass 50”. Calls and SMS are handed to the dialer/composer for final confirmation.
 
 ## Erasure and export
 

@@ -25,7 +25,7 @@ object Reminders {
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val store = Store(context)
-        val entry = try { store.entries("task").firstOrNull { it.id == intent.getStringExtra("id") && !it.done } } finally { store.close() } ?: return
+        val entry = try { store.find(intent.getStringExtra("id").orEmpty())?.takeIf { it.kind == "task" && !it.done } } finally { store.close() } ?: return
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel("reminders", "Friday reminders", NotificationManager.IMPORTANCE_DEFAULT))
@@ -39,6 +39,6 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         val store = Store(context)
-        try { store.entries("task").filter { !it.done && it.due > System.currentTimeMillis() }.forEach { Reminders.schedule(context, it.id, it.due) } } finally { store.close() }
+        try { store.pendingTasks().forEach { Reminders.schedule(context, it.id, it.due) } } finally { store.close() }
     }
 }

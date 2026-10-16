@@ -10,6 +10,7 @@ sealed interface Command {
     data class Open(val name: String) : Command
     data class Dial(val number: String) : Command
     data class Remind(val minutes: Long, val text: String) : Command
+    data object VoicePassword : Command
     data object Chat : Command
 }
 
@@ -19,6 +20,7 @@ object Commands {
         val text = raw.trim().replace(Regex("^(hey\\s+)?friday[,!:]?\\s+", RegexOption.IGNORE_CASE), "").trim()
         val lower = text.lowercase().trimEnd('.', '!', '?')
         return when {
+            Regex("\\bpass(word|code)?\\s+\\S+", RegexOption.IGNORE_CASE).containsMatchIn(text) && Regex("lock|screen|power|switch off", RegexOption.IGNORE_CASE).containsMatchIn(text) -> Command.VoicePassword
             lower in listOf("lock my phone", "lock phone", "lock screen", "फोन लॉक करो") -> Command.Lock
             lower in listOf("switch off my phone", "turn off my phone", "power menu", "shutdown phone") -> Command.Power
             lower in listOf("read my screen", "read screen", "स्क्रीन पढ़ो") -> Command.Screen
@@ -32,7 +34,7 @@ object Commands {
             else -> {
                 val match = Regex("^remind me in (\\d{1,5}) (minute|minutes|hour|hours) to (.+)$", RegexOption.IGNORE_CASE).matchEntire(text)
                 if (match != null) {
-                    val minutes = match.groupValues[1].toLong() * if (match.groupValues[2].startsWith("hour")) 60 else 1
+                    val minutes = match.groupValues[1].toLong() * if (match.groupValues[2].startsWith("hour", true)) 60 else 1
                     if (minutes in 1..43200) Command.Remind(minutes, match.groupValues[3]) else Command.Chat
                 } else Command.Chat
             }

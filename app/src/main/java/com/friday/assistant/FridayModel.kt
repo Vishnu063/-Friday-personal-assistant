@@ -28,6 +28,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var draftDocument by mutableStateOf("")
     var resume by mutableStateOf(prefs.getString("resume", "").orEmpty()); private set
     var accentMint by mutableStateOf(prefs.getBoolean("mint", false)); private set
+    init { store.pendingTasks().forEach { runCatching { Reminders.schedule(application, it.id, it.due) } } }
     fun onboard() { onboarded = true; prefs.edit().putBoolean("onboarded", true).apply() }
     fun language(value: String) { language = value; prefs.edit().putString("language", value).apply() }
     fun speech(value: Boolean) { speakReplies = value; prefs.edit().putBoolean("speak", value).apply() }
@@ -48,7 +49,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         else if (entry.due > System.currentTimeMillis()) Reminders.schedule(getApplication(), entry.id, entry.due)
         refresh()
     }
-    fun edit(entry: Entry, text: String) { if (text.isNotBlank()) { delete(entry); save(entry.kind, text, if (entry.done) 0 else entry.due) } }
+    fun edit(entry: Entry, text: String) { if (text.isNotBlank()) { store.edit(entry, text.trim()); refresh() } }
     fun reply(text: String, persist: Boolean = true) {
         messages = (messages + ChatLine("Friday", text)).takeLast(100)
         if (persist) store.chat("Friday", text)
