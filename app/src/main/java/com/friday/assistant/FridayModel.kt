@@ -147,7 +147,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         if (busy) return
         busy = true
         viewModelScope.launch {
-            try { brain.unload(true); modelName = "No model installed"; prefs.edit().remove("model").apply() }
+            try { brain.unload(true); modelName = "No model installed"; modelDiagnostic = "No model installed"; prefs.edit().remove("model").apply() }
             catch (error: Exception) { notice = error.message.orEmpty() }
             finally { busy = false }
         }

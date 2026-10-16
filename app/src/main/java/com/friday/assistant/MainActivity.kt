@@ -73,6 +73,7 @@ class MainActivity : FragmentActivity() {
     private var restorePreview by mutableStateOf<BackupData?>(null)
     private var permissionEpoch by mutableIntStateOf(0)
     private var voiceTarget: ((String) -> Unit)? = null
+    private var pendingOcr by mutableStateOf<InputImage?>(null)
     private val restorePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) lifecycleScope.launch {
             try {
@@ -83,7 +84,7 @@ class MainActivity : FragmentActivity() {
                         output.toString("UTF-8")
                     } ?: error("Cannot open backup.")
                 }
-                restorePreview = Backup.parse(text)
+                restorePreview = withContext(Dispatchers.Default) { Backup.parse(text) }
             } catch (error: Exception) { vm.notice = "Backup not restored: ${error.message?.take(180)}" }
         }
     }
@@ -104,8 +105,8 @@ class MainActivity : FragmentActivity() {
         if (uri != null) {
             val snapshot = org.json.JSONObject(vm.store.export()).put("resume", vm.resume).toString(2)
             lifecycleScope.launch {
-                runCatching { withContext(Dispatchers.IO) { contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(snapshot) } ?: error("Cannot write file") } }
-                    .onSuccess { vm.notice = "Export saved. It contains your personal data; share carefully." }.onFailure { vm.notice = "Export failed. Try a different folder." }
+                runCatching { withContext(Dispatchers.IO) { Backup.parse(snapshot); contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(snapshot) } ?: error("Cannot write file") } }
+                    .onSuccess { vm.notice = "Export saved. It contains your personal data; share carefully." }.onFailure { vm.notice = "Export failed: ${it.message?.take(180)}" }
             }
         }
     }
@@ -200,6 +201,7 @@ class MainActivity : FragmentActivity() {
         runCatching { InputImage.fromFilePath(this, uri) }.onSuccess(::recognizeImage).onFailure { vm.notice = "Could not read image." }
     }
     private fun recognizeImage(image: InputImage) {
+        if (!getPreferences(0).getBoolean("ocrDisclosure", false)) { pendingOcr = image; return }
         vm.notice = "Reading image text on your phone…"
         val recognizer = if (vm.language.startsWith("hi")) TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build()) else TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         recognizer.process(image).addOnSuccessListener { result ->
@@ -271,6 +273,7 @@ class MainActivity : FragmentActivity() {
         if (destructive.isNotBlank()) AlertDialog(onDismissRequest = { destructive = "" }, title = { Text("${destructive}?") }, text = { Text("This cannot be undone. Personal data exports you saved elsewhere are unaffected.") }, confirmButton = { TextButton(onClick = { when (destructive) { "Erase personal data" -> { voice.stop(); vm.erasePersonalData() }; "Clear chat" -> vm.clearChat(); "Remove AI model" -> vm.removeModel(); "Empty trash" -> vm.emptyTrash() }; destructive = "" }) { Text("Confirm") } }, dismissButton = { TextButton(onClick = { destructive = "" }) { Text("Cancel") } })
         if (actionPreview != null) AlertDialog(onDismissRequest = { actionPreview = null }, title = { Text("Review phone action") }, text = { Text(if (actionPreview == Command.Lock) "Friday understood: lock this phone now. The screen will lock after Android verifies your identity." else "Friday understood: open the Android power menu. You must choose Power off yourself; Friday does not silently shut down the phone.") }, confirmButton = { TextButton(onClick = { val action = actionPreview; actionPreview = null; if (action != null) confirmPhoneAction(action) }) { Text("Continue to authentication") } }, dismissButton = { TextButton(onClick = { actionPreview = null }) { Text("Cancel") } })
         restorePreview?.let { backup -> AlertDialog(onDismissRequest = { restorePreview = null }, title = { Text("Merge this backup?") }, text = { Text("${backup.items.size} items, ${backup.chats.size} messages. Existing items stay; matching entries are skipped. A non-empty backed-up resume replaces saved resume text. Future task reminders will be scheduled. Models, permissions, deleted items and credentials are not imported.") }, confirmButton = { TextButton(enabled = !vm.busy, onClick = { runCatching { vm.restoreBackup(backup) }.onFailure { vm.notice = "Restore failed: ${it.message?.take(150)}" }; restorePreview = null; requestNotifications() }) { Text("Restore and merge") } }, dismissButton = { TextButton(onClick = { restorePreview = null }) { Text("Cancel") } }) }
+        pendingOcr?.let { image -> AlertDialog(onDismissRequest = { pendingOcr = null }, title = { Text("Use on-device OCR?") }, text = { Text("Google ML Kit processes your image and recognised text on this device. Its SDK collects device/app information and performance or usage metrics under Google's terms. Friday does not upload the image or recognised text. You can use plain text/PDF tools without running OCR.") }, confirmButton = { TextButton(onClick = { getPreferences(0).edit().putBoolean("ocrDisclosure", true).apply(); pendingOcr = null; recognizeImage(image) }) { Text("Continue") } }, dismissButton = { TextButton(onClick = { pendingOcr = null }) { Text("Cancel") } }) }
         if (appChoices.isNotEmpty()) AlertDialog(onDismissRequest = { appChoices = emptyList() }, title = { Text("Which app?") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) { appChoices.forEach { (name, pkg) -> TextButton(onClick = { appChoices = emptyList(); packageManager.getLaunchIntentForPackage(pkg)?.let(::open) }) { Text(name) } } } }, confirmButton = { TextButton(onClick = { appChoices = emptyList() }) { Text("Cancel") } })
     }
 
@@ -490,7 +493,7 @@ class MainActivity : FragmentActivity() {
                 var modelUrl by remember { mutableStateOf("") }; var checksum by remember { mutableStateOf("") }; var confirmDownload by remember { mutableStateOf(false) }
                 OutlinedTextField(modelUrl, { modelUrl = it }, Modifier.fillMaxWidth(), label = { Text("Direct HTTPS .litertlm download URL") })
                 OutlinedTextField(checksum, { checksum = it.trim() }, Modifier.fillMaxWidth(), label = { Text("Provider SHA-256 (recommended)") })
-                Text("Only this explicit download uses Friday's network permission. No chat, resume or screen content is uploaded. Your provider sees your IP; mobile data charges may apply. Gated models should be downloaded in your browser and imported.", style = MaterialTheme.typography.bodySmall)
+                Text("This is Friday's explicit network feature. No chat, resume or screen content is sent by the downloader. The OCR SDK may send diagnostic/usage metrics under Google's terms. Your provider sees your IP; mobile data charges may apply. Gated models should be downloaded in your browser and imported.", style = MaterialTheme.typography.bodySmall)
                 Button(enabled = !vm.busy && modelUrl.isNotBlank(), onClick = { confirmDownload = true }) { Text("Review download") }
                 if (confirmDownload) AlertDialog(onDismissRequest = { confirmDownload = false }, title = { Text("Download to this phone?") }, text = { Text("Provider: ${runCatching { ModelDownload.validateUrl(modelUrl).host }.getOrDefault("Invalid HTTPS URL")}\nUse a trusted source. ${if (checksum.isBlank()) "No expected checksum entered; the download will not be independently verified." else "The supplied SHA-256 must match before installation."} The current model is replaced only after a completed download. Runtime compatibility requires the model test.") }, confirmButton = { TextButton(onClick = { confirmDownload = false; vm.downloadModel(modelUrl, checksum) }) { Text("Download") } }, dismissButton = { TextButton(onClick = { confirmDownload = false }) { Text("Cancel") } })
             }
@@ -513,6 +516,10 @@ class MainActivity : FragmentActivity() {
                 }
                 Hint("App permissions", "Manage microphone and other access", Icons.Outlined.Tune) { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))) }
                 Text("Lock and power-menu requests require a fresh device PIN/fingerprint check. Spoken passwords are not used. Screen reading is text-only and does not bypass protected content.", style = MaterialTheme.typography.bodySmall)
+            }
+            Panel("OCR provider privacy") {
+                Text("Google ML Kit processes OCR inputs/outputs on-device, but collects device/app information and SDK performance/usage metrics. Android voice providers have their own policies. Friday has no chat-upload client.", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { open(Intent(Intent.ACTION_VIEW, Uri.parse("https://developers.google.com/ml-kit/android-data-disclosure"))) }) { Text("Read Google's SDK disclosure") }
             }
             Panel("Your data") {
                 Text("Chats, notes, tasks, preferences and resume text are stored in Android's private app storage. Cloud backup is disabled. Screen/document explanations are temporary and excluded from chat history. Local storage is not an encrypted vault.", style = MaterialTheme.typography.bodySmall)
@@ -541,7 +548,7 @@ class MainActivity : FragmentActivity() {
         val info = remember(epoch) { ActivityManager.MemoryInfo().also { getSystemService(ActivityManager::class.java).getMemoryInfo(it) } }
         val notificationsEnabled = androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()
         val power = getSystemService(android.os.PowerManager::class.java)
-        Page("Friday health check", "A local readiness report. No personal data or diagnostics are uploaded.") {
+        Page("Friday health check", "A local readiness report. Friday does not upload this report; speech and OCR providers have separate data policies.") {
             Panel("This phone") {
                 Text("${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE}")
                 Text("Available RAM: ${info.availMem / 1048576} MB / ${info.totalMem / 1048576} MB total")

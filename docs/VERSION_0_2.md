@@ -32,4 +32,4 @@ Tools → **Interview coach** asks one practical Linux/Kubernetes/AWS/CI-CD/Terr
 
 Tools → **Project memory** stores repository link, last checkpoint and next task. Update after each session or add your next step to Tasks. It does not connect your GitHub account or automatically inspect repositories.
 
-Tools → **Diagnostics** checks model readiness, permissions, speech services, battery/storage/RAM and provides a reminder-delivery test. No diagnostics upload is implemented. Real phone testing remains necessary.
+Tools → **Diagnostics** checks model readiness, permissions, speech services, battery/storage/RAM and provides a reminder-delivery test. Friday does not upload this readiness report. The OCR SDK and Android speech providers have separate diagnostic/data policies; review Settings → OCR provider privacy. Real phone testing remains necessary.

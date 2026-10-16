@@ -1,6 +1,6 @@
 # Privacy and action boundaries — v0.2
 
-Friday's chat model runs on your phone. There is no cloud LLM client or chat-upload feature. **v0.2 adds internet permission solely for an optional model-file download that you explicitly review and start.** No background model download, analytics client or chat/screen/resume upload is implemented. Android speech/TTS, browsers and apps you open have their own provider policies.
+Friday's chat model runs on your phone. There is no cloud LLM client or chat-upload feature. **v0.2 adds internet permission for an optional model-file download that you explicitly review and start; third-party OCR SDK networking must also be considered.** Friday implements no background model download, chat/screen/resume uploader or app analytics client. However, Google ML Kit collects device/app information and SDK performance/usage metrics under its own terms. Its OCR image inputs and recognised outputs are processed on-device and are not sent to Google according to its disclosure: https://developers.google.com/ml-kit/android-data-disclosure and https://developers.google.com/ml-kit/terms. The app explains this before first OCR use. SDK initialisation behaviour and Android providers are outside the local chat model; this is not a zero-telemetry guarantee. Android speech/TTS, browsers and apps you open have their own provider policies.
 
 ## Private chat
 
@@ -16,7 +16,7 @@ JSON backups are plaintext. Restore validates size, schema, item kinds, lengths,
 
 ## Explicit model download
 
-Only Settings → Review download → Download starts network transfer. Use trusted HTTPS model-file URLs and preferably a provider SHA-256. Credentials are not attached to requests. HTTPS redirects are bounded and revalidated; failed, cancelled, oversized or checksum-mismatched transfers are discarded. A completed download replaces the private imported model; actual runtime compatibility still needs the on-phone test. A missing expected hash means no independent integrity verification. Gated models should use a browser download + file import; no provider login/token handling is implemented. Model providers/CDNs see your IP and request URL. Mobile-data charges may apply.
+Friday's own model transfer starts only from Settings → Review download → Download. OCR SDK diagnostic networking is separate as disclosed above. Use trusted HTTPS model-file URLs and preferably a provider SHA-256. Credentials are not attached to requests. HTTPS redirects are bounded and revalidated; failed, cancelled, oversized or checksum-mismatched transfers are discarded. A completed download replaces the private imported model; actual runtime compatibility still needs the on-phone test. A missing expected hash means no independent integrity verification. Gated models should use a browser download + file import; no provider login/token handling is implemented. Model providers/CDNs see your IP and request URL. Mobile-data charges may apply.
 
 ## Voice
 

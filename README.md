@@ -18,7 +18,7 @@ Personal tools now include a **career dashboard** (Pune by default), **voice int
 
 A [signed-release workflow](docs/RELEASE_SIGNING.md) is prepared; its private signing secrets still require owner setup. Debug builds alone do not guarantee updates without reinstalling.
 
-**Network change:** v0.2 requests internet permission for an optional, explicit HTTPS model download. Local chat, screen text and resume are never uploaded by that downloader. System speech providers and browser searches remain separate services.
+**Network change:** v0.2 requests internet permission for an optional, explicit HTTPS model download. Google ML Kit may also transmit SDK diagnostic/usage metrics; its image inputs and OCR outputs remain on-device. Local chat, screen text and resume are never uploaded by that downloader. System speech providers and browser searches remain separate services.
 
 ## Get started on your phone
 

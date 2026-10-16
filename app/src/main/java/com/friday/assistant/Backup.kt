@@ -11,6 +11,13 @@ object Backup {
     val kinds = setOf("note", "task", "memory", "job", "career", "project", "practice")
     fun parse(text: String): BackupData {
         require(text.toByteArray().size <= MAX_BYTES) { "Backup is larger than 8 MB." }
+        var depth = 0; var quoted = false; var escaped = false
+        text.forEach { ch ->
+            if (quoted) { if (escaped) escaped = false else if (ch == '\\') escaped = true else if (ch == '"') quoted = false }
+            else if (ch == '"') quoted = true
+            else if (ch == '{' || ch == '[') { depth++; require(depth <= 16) { "Backup JSON nesting is too deep." } }
+            else if (ch == '}' || ch == ']') depth--
+        }
         val root = JSONObject(text)
         require(root.optString("format") in setOf("friday-v1", "friday-v2")) { "Not a supported Friday backup." }
         val records = root.getJSONArray("entries")

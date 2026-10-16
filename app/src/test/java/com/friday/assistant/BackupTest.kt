@@ -15,6 +15,9 @@ class BackupTest {
             assertTrue(runCatching { Backup.parse(input) }.isFailure)
         }
     }
+    @Test fun rejectsDeepNestingWithoutRecursingIntoJsonParser() {
+        assertTrue(runCatching { Backup.parse("[".repeat(100) + "0" + "]".repeat(100)) }.isFailure)
+    }
     @Test fun rejectsOversizedTextAndUnknownChatRole() {
         assertTrue(runCatching { Backup.parse(good.replace("Study", "x".repeat(16001))) }.isFailure)
         assertTrue(runCatching { Backup.parse(good.replace("\"You\"", "\"Execute\"")) }.isFailure)
