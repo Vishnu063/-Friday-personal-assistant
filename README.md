@@ -8,7 +8,7 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**Verified v0.2 preview:** [download Friday 0.2.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38962566082/artifacts/12072599894). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
+**Verified v0.3 preview:** [download Friday 0.3.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39037607865/artifacts/12103280392). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
 
 ## New in 0.3
 
@@ -52,7 +52,7 @@ A [signed-release workflow](docs/RELEASE_SIGNING.md) is prepared; its private si
 | DevOps helper | Interview prompt and log-analysis chat; no shell access or automatic infrastructure changes |
 | Web | Open an explicit query in your browser; the local model has no live search tool |
 | Personalisation | Animated Friday orb, violet/mint accent, voice language and speech toggle |
-| Data controls | Export local personal data as JSON; clear chat, erase personal data, remove AI model separately |
+| Data controls | Password-encrypted backup/restore, legacy JSON export/restore; clear chat, erase personal data, remove AI model separately |
 
 ### Try these
 

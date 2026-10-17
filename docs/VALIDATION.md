@@ -1,5 +1,19 @@
 # Validation record
 
+## Friday 0.3.0 — 17 October 2026 (UTC)
+
+- APK source commit: `a97bb2b064f405163ea221ee3e02896857c5f249`.
+- [Build workflow](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39037607865).
+- Command: `gradle testDebugUnitTest lintDebug assembleDebug --stacktrace`.
+- Tests, Android lint, APK assembly and both artifact uploads passed.
+- [Download v0.3 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39037607865/artifacts/12103280392) (45,307,426 bytes compressed; GitHub login may be required).
+- ZIP SHA-256 reported by GitHub: `411cd9e566369798196157c9a4fbc624c3d8b51edf025cd4806492b7b6db4518`.
+- [Test/lint reports](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39037607865/artifacts/12103300348).
+
+New regression tests cover encrypted Unicode backup round trips, randomisation, wrong passwords, ciphertext tampering, unsupported encryption settings, clearing working password arrays, bounded relevant preference selection, additional local commands, SQL wildcard escaping, older-record search, deleted-row exclusion and bounded memory/task queries. Existing tests also run.
+
+Physical phone tests for app lock/authentication, external Share, pinned shortcuts, voice lifecycle, model unloading/reloading and RAM/battery measurements remain pending. The app lock is a UI gate rather than database encryption. No stable release key has been provisioned. Export before uninstalling an older debug preview; restore after installation. [v0.3 guide](VERSION_0_3.md).
+
 ## Friday 0.2.0 — 17 October 2026 (India)
 
 - APK source commit: `035251f8a8ad09ae67b001fefbb506f678db46e0`.
@@ -26,4 +40,4 @@ This is an installable preview with tested repository logic, not a guarantee of 
 
 ## Previous version
 
-[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.2 artifact above.
+[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.3 artifact above.
