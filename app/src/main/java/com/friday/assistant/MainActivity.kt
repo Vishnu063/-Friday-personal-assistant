@@ -447,7 +447,6 @@ class MainActivity : FragmentActivity() {
             Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             content()
-            if (vm.entries.size < vm.totalEntries) OutlinedButton(onClick = vm::loadMore) { Text("Load older saved items (${vm.entries.size}/${vm.totalEntries})") }
             Spacer(Modifier.height(12.dp))
         }
     }
@@ -488,6 +487,7 @@ class MainActivity : FragmentActivity() {
             if (overdue > 0) Text("$overdue overdue tasks — review or reschedule below.", color = MaterialTheme.colorScheme.secondary)
             TextButton(onClick = { open(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }) { Text("Review Android battery restrictions") }
             if (tasks.isEmpty()) Text("Nothing here yet. Add your first task above.")
+            Text("Showing up to 200 matches. Search to find older tasks.", style = MaterialTheme.typography.bodySmall)
             tasks.forEach { EntryCard(it) }
         }
     }
@@ -506,6 +506,7 @@ class MainActivity : FragmentActivity() {
             if (kind == "memory") Text("Only preferences you save here are used as AI memory. Turn memory off in Settings anytime. Avoid passwords or sensitive secrets.", style = MaterialTheme.typography.bodySmall)
             var results by remember { mutableStateOf<List<Entry>>(emptyList()) }
             LaunchedEffect(filter, kind, vm.revision) { kotlinx.coroutines.delay(200); results = withContext(Dispatchers.IO) { vm.store.search(kind, filter, 200) } }
+            Text("Showing up to 200 matches. Search to find older items.", style = MaterialTheme.typography.bodySmall)
             results.forEach { EntryCard(it) }
         }
     }
@@ -590,7 +591,9 @@ class MainActivity : FragmentActivity() {
                 }) { Text("Compare skills") }
                 if (match.isNotBlank()) Text(match, style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(enabled = jobTitle.isNotBlank(), onClick = { vm.save("job", jobTitle); jobTitle = "" }) { Text("Track this job") }
-                vm.entries.filter { it.kind == "job" }.forEach { EntryCard(it) }
+                var jobs by remember { mutableStateOf<List<Entry>>(emptyList()) }
+                LaunchedEffect(vm.revision) { jobs = withContext(Dispatchers.IO) { vm.store.search("job", "", 200) } }
+                jobs.forEach { EntryCard(it) }
             }
             Panel("DevOps practice") {
                 Hint("Interview practice", "One question at a time", Icons.Outlined.Terminal) { page = 0; vm.ask("Act as a DevOps interviewer. Ask one practical troubleshooting question at a time. Start with Linux and wait for my answer.") }

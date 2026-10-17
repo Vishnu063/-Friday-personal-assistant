@@ -18,7 +18,6 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     val store = Store(application)
     val brain = LocalBrain(application)
     private val prefs = application.getSharedPreferences("friday", 0)
-    var entries by mutableStateOf(store.entries(limit = 200)); private set
     var messages by mutableStateOf(store.chats(limit = 40)); private set
     var busy by mutableStateOf(false); private set
     var streaming by mutableStateOf(""); private set
@@ -43,8 +42,6 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var appLock by mutableStateOf(prefs.getBoolean("appLock", false)); private set
     var compactMode by mutableStateOf(prefs.getBoolean("compactMode", true)); private set
     var aiLoaded by mutableStateOf(false); private set
-    var entryLimit by mutableIntStateOf(200); private set
-    var totalEntries by mutableIntStateOf(store.countActive()); private set
     private var idleJob: Job? = null
     var revision by mutableIntStateOf(0); private set
     private var foreground = true
@@ -52,7 +49,6 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun loadSavedChat() { if (!privacyMode) messages = store.chats() }
     fun appLock(value: Boolean) { appLock = value; prefs.edit().putBoolean("appLock", value).apply() }
     fun compact(value: Boolean) { if (!busy) { compactMode = value; brain.compact = value; prefs.edit().putBoolean("compactMode", value).apply(); releaseAI() } }
-    fun loadMore() { entryLimit += 200; refresh() }
     private fun scheduleRelease() {
         idleJob?.cancel()
         if (!foreground) { releaseAI(); return }
@@ -119,7 +115,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun memory(value: Boolean) { useMemory = value; prefs.edit().putBoolean("memory", value).apply() }
     fun theme(value: Boolean) { accentMint = value; prefs.edit().putBoolean("mint", value).apply() }
     fun resume(value: String) { resume = value.take(12000); prefs.edit().putString("resume", resume).apply() }
-    fun refresh() { entries = store.entries(limit = entryLimit); trash = store.entries(trash = true, limit = 50); totalEntries = store.countActive(); revision++ }
+    fun refresh() { trash = store.entries(trash = true, limit = 50); revision++ }
     fun save(kind: String, text: String, due: Long = 0) {
         if (text.isBlank()) { notice = "Enter something to save."; return }
         val id = store.add(kind, text.trim(), due)

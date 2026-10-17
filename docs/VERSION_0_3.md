@@ -16,7 +16,7 @@ Compact mode is on by default: 2,048 model context tokens, replies capped at 256
 
 The AI model loads only for AI chat or a compatibility test. It releases after 45 seconds idle, on backgrounding or a memory-pressure signal; generation is stopped before release. Reopening AI may therefore take longer. The model file stays on storage. Memory savings depend on the native runtime and phone and have not been measured on physical hardware.
 
-Initial saved lists load up to 200 entries, chat 40 messages and trash 50 entries. SQL search can find older saved items (up to 200 results; practice 100). “Load older” deliberately expands the loaded list. AI retrieves up to four relevant preferences from the latest 64, with a bounded character budget; it does not load every note into a prompt. No background listening; recognition and speech engines are created on demand and released after use/backgrounding.
+Saved lists query up to 200 entries when opened; chat starts with 40 messages and trash with 50 entries. SQL search can find older saved items (up to 200 results; practice 100). Refine search terms if a query reaches its result limit. AI retrieves up to four relevant preferences from the latest 64, with a bounded character budget; it does not load every note into a prompt. No background listening; recognition and speech engines are created on demand and released after use/backgrounding.
 
 ## Security scope
 
