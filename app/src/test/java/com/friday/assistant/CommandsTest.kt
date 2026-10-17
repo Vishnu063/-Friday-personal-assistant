@@ -31,4 +31,12 @@ class CommandsTest {
         assertEquals(listOf("Kubernetes"), missing)
         assertEquals(emptyList<String>(), Commands.jobMatch("laws", "AWS").first)
     }
+    @Test fun commonRequestsUseLocalCommands() {
+        assertEquals(Command.Briefing, Commands.parse("What do I have today?"))
+        assertEquals(Command.Help, Commands.parse("What can you do?"))
+        assertEquals(Command.DateTime, Commands.parse("What time is it?"))
+        assertEquals(Command.ListItems("note"), Commands.parse("Show my notes"))
+        assertEquals(Command.Chat, Commands.parse("Explain how to show my notes"))
+    }
+
 }

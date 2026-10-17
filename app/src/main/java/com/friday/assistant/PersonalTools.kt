@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 
@@ -43,7 +45,8 @@ private fun fields(entry: Entry) = runCatching { JSONObject(entry.text) }.getOrD
             if (comparison.isNotBlank()) Text(comparison)
             Button(enabled = company.isNotBlank() && role.isNotBlank(), onClick = { vm.saveStructured("career", mapOf("company" to company.trim(), "role" to role.trim(), "location" to location, "url" to url, "description" to jd, "status" to "Saved")); company = ""; url = ""; jd = ""; comparison = "" }) { Text("Save opportunity") }
         }
-        val jobs = vm.entries.filter { it.kind == "career" }
+        var jobs by remember { mutableStateOf<List<Entry>>(emptyList()) }
+        LaunchedEffect(vm.revision, filter) { kotlinx.coroutines.delay(150); jobs = withContext(Dispatchers.IO) { vm.store.search("career", filter, 200) } }
         Text("${jobs.size} tracked • ${jobs.count { fields(it).optString("status") == "Applied" }} applied")
         OutlinedTextField(filter, { filter = it }, label = { Text("Filter company, role or status") }, modifier = Modifier.fillMaxWidth())
         jobs.filter { it.text.contains(filter, true) }.take(100).forEach { entry ->
@@ -79,7 +82,11 @@ private fun fields(entry: Entry) = runCatching { JSONObject(entry.text) }.getOrD
             TextButton(onClick = { index++; answer = ""; review = "" }) { Text("Next scenario") }
         }
         Text("Revision notebook", style = MaterialTheme.typography.titleMedium)
-        vm.entries.filter { it.kind == "practice" }.take(50).forEach { entry ->
+        var revisionSearch by rememberSaveable { mutableStateOf("") }
+        var savedPractice by remember { mutableStateOf<List<Entry>>(emptyList()) }
+        OutlinedTextField(revisionSearch, { revisionSearch = it }, label = { Text("Search all saved practice") }, modifier = Modifier.fillMaxWidth())
+        LaunchedEffect(vm.revision, revisionSearch) { kotlinx.coroutines.delay(150); savedPractice = withContext(Dispatchers.IO) { vm.store.search("practice", revisionSearch, 100) } }
+        savedPractice.forEach { entry ->
             val item = fields(entry)
             ToolCard { Text(item.optString("topic"), color = MaterialTheme.colorScheme.secondary); Text(item.optString("question")); Text(item.optString("feedback")); TextButton(onClick = { vm.delete(entry) }) { Text("Move to trash") } }
         }
@@ -97,7 +104,9 @@ private fun fields(entry: Entry) = runCatching { JSONObject(entry.text) }.getOrD
             Button(enabled = name.isNotBlank() && checkpoint.isNotBlank() && next.isNotBlank(), onClick = { vm.saveStructured("project", mapOf("name" to name, "repo" to repo, "checkpoint" to checkpoint, "next" to next, "updated" to System.currentTimeMillis().toString())); name = ""; repo = ""; checkpoint = ""; next = "" }) { Text("Save checkpoint") }
         }
         OutlinedTextField(filter, { filter = it }, label = { Text("Find a project") }, modifier = Modifier.fillMaxWidth())
-        vm.entries.filter { it.kind == "project" && it.text.contains(filter, true) }.take(100).forEach { entry ->
+        var projects by remember { mutableStateOf<List<Entry>>(emptyList()) }
+        LaunchedEffect(vm.revision, filter) { kotlinx.coroutines.delay(150); projects = withContext(Dispatchers.IO) { vm.store.search("project", filter, 200) } }
+        projects.forEach { entry ->
             val item = fields(entry)
             var updatedCheckpoint by remember(entry.text) { mutableStateOf(item.optString("checkpoint")) }
             var updatedNext by remember(entry.text) { mutableStateOf(item.optString("next")) }

@@ -35,3 +35,13 @@ Record model name, phone model, RAM, Android version, first-token latency, error
 - [ ] Job stages/follow-ups, spoken interview answers/revision and editable project next steps survive restart.
 - [ ] Screen/action preview text matches the selected action; cancelling never dispatches it.
 - [ ] Signed releases reuse the privately configured key and a higher versionCode; debug-to-release migration restores exported data.
+
+## v0.3 checks
+
+- Enable app lock; background/reopen, rotate, open via Share/shortcut, cancel auth, and test device PIN/biometrics. No content or speech before unlock.
+- Export/restore encrypted Unicode data, wrong password, modified file, cancelled picker; verify merge preview and legacy JSON restore.
+- Share text, PDF and a large/rotated image; review before saving. Shared commands must remain inert.
+- Pin both shortcuts on your launcher; mic must wait for a tap.
+- Compare idle/background/active-AI RAM on the same phone/model. Verify 45-second release, background generation stop, reload and compact/balanced switching.
+- Search an older note/task/project beyond 200 entries, and check literal percent/underscore searches.
+- Test voice interruption, first-use TTS, conversation mode and backgrounding.

@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import java.io.File
 
@@ -17,8 +18,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     val store = Store(application)
     val brain = LocalBrain(application)
     private val prefs = application.getSharedPreferences("friday", 0)
-    var entries by mutableStateOf(store.entries()); private set
-    var messages by mutableStateOf(store.chats()); private set
+    var entries by mutableStateOf(store.entries(limit = 200)); private set
+    var messages by mutableStateOf(store.chats(limit = 40)); private set
     var busy by mutableStateOf(false); private set
     var streaming by mutableStateOf(""); private set
     var notice by mutableStateOf("")
@@ -32,14 +33,40 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var resume by mutableStateOf(prefs.getString("resume", "").orEmpty()); private set
     var accentMint by mutableStateOf(prefs.getBoolean("mint", false)); private set
     var privacyMode by mutableStateOf(false); private set
-    var trash by mutableStateOf(store.entries(trash = true)); private set
+    var trash by mutableStateOf(store.entries(trash = true, limit = 50)); private set
     var lastDeleted by mutableStateOf<Entry?>(null); private set
     var offlineVoice by mutableStateOf(prefs.getBoolean("offlineVoice", false)); private set
     var speechRate by mutableFloatStateOf(prefs.getFloat("speechRate", 1f)); private set
     var modelProgress by mutableStateOf(""); private set
     var modelDiagnostic by mutableStateOf("Not tested on this phone yet"); private set
     private var modelJob: Job? = null
-    fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = if (value) emptyList() else store.chats(); speechText = "" } }
+    var appLock by mutableStateOf(prefs.getBoolean("appLock", false)); private set
+    var compactMode by mutableStateOf(prefs.getBoolean("compactMode", true)); private set
+    var aiLoaded by mutableStateOf(false); private set
+    var entryLimit by mutableIntStateOf(200); private set
+    var totalEntries by mutableIntStateOf(store.countActive()); private set
+    private var idleJob: Job? = null
+    var revision by mutableIntStateOf(0); private set
+    private var foreground = true
+    fun foreground(value: Boolean) { foreground = value; if (!value) { speechText = ""; releaseAI() } }
+    fun loadSavedChat() { if (!privacyMode) messages = store.chats() }
+    fun appLock(value: Boolean) { appLock = value; prefs.edit().putBoolean("appLock", value).apply() }
+    fun compact(value: Boolean) { if (!busy) { compactMode = value; brain.compact = value; prefs.edit().putBoolean("compactMode", value).apply(); releaseAI() } }
+    fun loadMore() { entryLimit += 200; refresh() }
+    private fun scheduleRelease() {
+        idleJob?.cancel()
+        if (!foreground) { releaseAI(); return }
+        idleJob = viewModelScope.launch { delay(45000); brain.unload(); aiLoaded = false }
+    }
+    fun releaseAI() {
+        idleJob?.cancel(); brain.stop()
+        viewModelScope.launch { brain.unload(); aiLoaded = false }
+    }
+    fun basicList(kind: String): String {
+        val records = store.entries(kind, limit = 12).filter { kind != "task" || !it.done }
+        return if (records.isEmpty()) "No saved $kind items yet." else records.joinToString("\n") { "• ${it.text.take(200)}" }
+    }
+    fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = if (value) emptyList() else store.chats(limit = 40); speechText = "" } }
     fun offlineVoice(value: Boolean) { offlineVoice = value; prefs.edit().putBoolean("offlineVoice", value).apply() }
     fun rate(value: Float) { speechRate = value.coerceIn(.6f, 1.4f); prefs.edit().putFloat("speechRate", speechRate).apply() }
     fun restoreItem(entry: Entry) { store.restore(entry.id); lastDeleted = null; refresh(); reschedule() }
@@ -49,7 +76,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         if (busy) return
         val count = store.import(data)
         if (data.resume.isNotBlank()) resume(data.resume)
-        refresh(); if (!privacyMode) messages = store.chats(); reschedule()
+        refresh(); if (!privacyMode) messages = store.chats(limit = 40); reschedule()
         notice = "Restored $count new items. Duplicates skipped. Future task reminders scheduled; notification permission is still required."
     }
     fun saveStructured(kind: String, fields: Map<String, String>) { save(kind, org.json.JSONObject(fields).toString()) }
@@ -72,6 +99,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     }
     fun testModel() {
         if (busy) return
+        idleJob?.cancel(); brain.compact = compactMode
         busy = true; modelDiagnostic = "Loading and generating…"
         viewModelScope.launch {
             val start = android.os.SystemClock.elapsedRealtime()
@@ -81,7 +109,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
                 modelDiagnostic = "Compatibility test passed • first text ${first}ms • total ${android.os.SystemClock.elapsedRealtime() - start}ms. Quality not assessed."
             } catch (error: Exception) { modelDiagnostic = "Test failed: ${error.message?.take(150)}" }
             catch (_: LinkageError) { modelDiagnostic = "Native runtime is unavailable on this device." }
-            finally { busy = false }
+            finally { busy = false; aiLoaded = brain.loaded; scheduleRelease() }
         }
     }
     init { store.pendingTasks().forEach { runCatching { Reminders.schedule(application, it.id, it.due) } } }
@@ -91,7 +119,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun memory(value: Boolean) { useMemory = value; prefs.edit().putBoolean("memory", value).apply() }
     fun theme(value: Boolean) { accentMint = value; prefs.edit().putBoolean("mint", value).apply() }
     fun resume(value: String) { resume = value.take(12000); prefs.edit().putString("resume", resume).apply() }
-    fun refresh() { entries = store.entries(); trash = store.entries(trash = true) }
+    fun refresh() { entries = store.entries(limit = entryLimit); trash = store.entries(trash = true, limit = 50); totalEntries = store.countActive(); revision++ }
     fun save(kind: String, text: String, due: Long = 0) {
         if (text.isBlank()) { notice = "Enter something to save."; return }
         val id = store.add(kind, text.trim(), due)
@@ -109,28 +137,30 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun edit(entry: Entry, text: String) { if (text.isNotBlank()) { store.edit(entry, text.trim()); refresh() } }
     fun reply(text: String, persist: Boolean = true, ai: Boolean = false) {
         val role = if (ai) "Friday • AI suggestion" else "Friday"
-        messages = (messages + ChatLine(role, text)).takeLast(100)
+        messages = (messages + ChatLine(role, text)).takeLast(40)
         if (persist && !privacyMode) store.chat(role, text)
-        speechText = ""; speechText = text
+        speechText = ""; if (foreground) speechText = text
     }
     fun briefing(): String {
-        val tasks = entries.filter { it.kind == "task" && !it.done }
-        return if (tasks.isEmpty()) "Your task list is clear. What would you like to work on today?" else "You have ${tasks.size} open tasks:\n" + tasks.take(8).joinToString("\n") { "• ${it.text}" }
+        val tasks = store.openTasks(8)
+        val count = store.countOpenTasks()
+        return if (tasks.isEmpty()) "Your task list is clear. What would you like to work on today?" else "You have $count open tasks:\n" + tasks.take(8).joinToString("\n") { "• ${it.text}" }
     }
     fun ask(question: String, ephemeral: Boolean = false) {
         if (busy || question.isBlank()) return
         val privateTurn = ephemeral || privacyMode
-        val history = if (privateTurn) emptyList() else store.chats()
-        messages = (messages + ChatLine("You", if (ephemeral) "Explain selected content (not saved)" else question)).takeLast(100)
+        val history = if (privateTurn) emptyList() else store.chats(limit = 4)
+        messages = (messages + ChatLine("You", if (ephemeral) "Explain selected content (not saved)" else question)).takeLast(40)
         if (!privateTurn) store.chat("You", question)
+        idleJob?.cancel(); brain.compact = compactMode
         busy = true; streaming = ""
         viewModelScope.launch {
             try {
-                val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) entries.filter { it.kind == "memory" } else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
+                val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) MemoryPolicy.select(question, store.memoryCandidates()) else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
                 reply(answer, !privateTurn, ai = true)
             } catch (error: Exception) { notice = error.message?.take(240) ?: "Model could not answer. Try a smaller compatible model." }
             catch (error: LinkageError) { notice = "The local AI runtime is not compatible with this device. Other tools remain available." }
-            finally { busy = false; streaming = "" }
+            finally { busy = false; streaming = ""; aiLoaded = brain.loaded; scheduleRelease() }
         }
     }
     fun importModel(uri: Uri) {
@@ -155,12 +185,12 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun clearChat() { if (!busy) { store.clearChats(); messages = emptyList(); speechText = "" } }
     fun erasePersonalData() {
         if (busy) return
-        entries.forEach { Reminders.cancel(getApplication(), it.id) }
+        store.pendingTasks().forEach { Reminders.cancel(getApplication(), it.id) }
         store.clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
         notice = "Chats, notes, tasks, memories, trash, career/project/practice data and resume erased. Remove the model separately in Settings."
     }
     override fun onCleared() {
-        brain.stop()
+        idleJob?.cancel(); brain.stop()
         // The viewModel job cancels first; serialize native release after inference is drained.
         val executor = Executors.newSingleThreadExecutor()
         executor.execute { kotlinx.coroutines.runBlocking { brain.unload() }; store.close(); executor.shutdown() }

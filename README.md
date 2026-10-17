@@ -4,13 +4,17 @@
 
 A calm, private space to talk, remember, plan and get things done. **No Ollama, OpenClaw, paid AI API key or always-on computer required.**
 
-> **Early Android preview (0.2).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
+> **Early Android preview (0.3).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
 **Verified v0.2 preview:** [download Friday 0.2.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38962566082/artifacts/12072599894). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
 
-## New in 0.2
+## New in 0.3
+
+Simpler Home, PIN/fingerprint app lock, Android Share reception, pinned Talk/Note shortcuts, password-encrypted backups, more fast commands, and compact AI context with idle/background unloading. Saved lists and preference retrieval are bounded. [v0.3 guide](docs/VERSION_0_3.md). Physical-phone RAM and battery benchmarks are pending.
+
+## Previous additions in 0.2
 
 Private chat, Undo/trash, validated backup restore, searchable memory, phone-action previews, editable screen review, stronger voice interruption handling, strict offline voice, speech speed, model progress/download/checksums, on-phone compatibility test, diagnostics and overdue-task recovery.
 

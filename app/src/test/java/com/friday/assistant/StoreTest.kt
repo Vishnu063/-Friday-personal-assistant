@@ -47,4 +47,28 @@ class StoreTest {
         assertTrue(store!!.entries().single().done)
         assertEquals(1, store!!.chats().size)
     }
+    @Test fun boundedListsCanSearchOlderRecordsAndEscapeWildcards() {
+        store = Store(context)
+        val old = store!!.add("note", "older 50%_done")
+        repeat(205) { store!!.add("note", "recent $it") }
+        assertEquals(200, store!!.entries(limit = 200).size)
+        assertEquals(206, store!!.countActive())
+        assertEquals(old, store!!.search("note", "50%_").single().id)
+        assertTrue(store!!.search("note", "absent%").isEmpty())
+        assertEquals(old, store!!.find(old)!!.id)
+        store!!.delete(old)
+        assertNull(store!!.find(old))
+    }
+    @Test fun retrievalAndTaskSchedulingExcludeCompletedAndDeletedRows() {
+        store = Store(context)
+        repeat(70) { store!!.add("memory", "x".repeat(1000)) }
+        assertEquals(64, store!!.memoryCandidates().size)
+        assertTrue(store!!.memoryCandidates().all { it.text.length == 600 })
+        val id = store!!.add("task", "future", System.currentTimeMillis() + 1000000)
+        assertEquals(id, store!!.pendingTasks().single().id)
+        store!!.toggle(store!!.find(id)!!)
+        assertTrue(store!!.pendingTasks().isEmpty())
+        assertEquals(0, store!!.countOpenTasks())
+    }
+
 }

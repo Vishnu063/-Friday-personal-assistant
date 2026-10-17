@@ -1,3 +1,12 @@
+# 0.3.0
+
+- Simple Home and three main navigation destinations.
+- Device-authenticated app lock, Share to Friday and launcher shortcuts.
+- Authenticated password-encrypted backup/restore; legacy JSON support.
+- Compact context, relevant bounded preferences, paged lists and database search.
+- Lazy AI/voice loading, idle/background AI release, additional deterministic commands.
+- Added crypto, memory-budget, command and SQLite retrieval regression tests.
+
 # Changelog
 
 ## 0.2.0 — Personal workflow and reliability update

@@ -11,6 +11,9 @@ sealed interface Command {
     data class Dial(val number: String) : Command
     data class Remind(val minutes: Long, val text: String) : Command
     data object VoicePassword : Command
+    data object Help : Command
+    data object DateTime : Command
+    data class ListItems(val kind: String) : Command
     data object Chat : Command
 }
 
@@ -24,7 +27,11 @@ object Commands {
             lower in listOf("lock my phone", "lock phone", "lock screen", "फोन लॉक करो") -> Command.Lock
             lower in listOf("switch off my phone", "turn off my phone", "power menu", "shutdown phone") -> Command.Power
             lower in listOf("read my screen", "read screen", "स्क्रीन पढ़ो") -> Command.Screen
-            lower in listOf("morning briefing", "my day", "today's tasks") -> Command.Briefing
+            lower in listOf("morning briefing", "my day", "today's tasks", "what do i have today", "show my tasks", "what are my tasks") -> Command.Briefing
+            lower in listOf("help", "what can you do", "how do i use friday") -> Command.Help
+            lower in listOf("what time is it", "what is the time", "what is today's date", "time", "date") -> Command.DateTime
+            lower in listOf("show my notes", "my notes", "list notes") -> Command.ListItems("note")
+            lower in listOf("my preferences", "what do you remember about me", "show my memory") -> Command.ListItems("memory")
             lower.startsWith("remember ") -> Command.Save("memory", text.substring(9).trim())
             lower.startsWith("note ") -> Command.Save("note", text.substring(5).trim())
             lower.startsWith("add task ") -> Command.Save("task", text.substring(9).trim())

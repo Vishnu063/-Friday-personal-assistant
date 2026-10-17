@@ -29,3 +29,7 @@ Android Accessibility permission is persistent until revoked, but Friday reads t
 Lock and power-menu actions have an explicit preview followed by fresh Android PIN/password/strong-biometric confirmation. Power off still needs your tap in Android's menu. Spoken-password phone commands are rejected before chat persistence. Model output and imported files cannot enter the direct command router, and the model has no executable tools.
 
 Calls/SMS open the dialer/composer for final user confirmation. Career search opens your browser; job postings are not automatically fetched or applied to. Project checkpoints are manually saved, not silently read from GitHub.
+
+## v0.3 app lock, sharing and backups
+
+App lock gates the UI using device authentication and blocks screenshots/recents. It is not database encryption. Android Share content is temporary until explicitly saved; it never enters the command router automatically. Encrypted exports use password-based AES-256-GCM with random salt/nonce and PBKDF2-HMAC-SHA256 (210,000 iterations). Passwords are not persisted and cannot be recovered. Plain JSON export remains available as an advanced option. Backup imports do not grant permissions or enable app lock. See [v0.3 details](VERSION_0_3.md).

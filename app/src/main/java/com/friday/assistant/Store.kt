@@ -17,7 +17,17 @@ class Store(context: Context) : SQLiteOpenHelper(context, "friday.db", null, 2) 
         db.execSQL("CREATE TABLE chats (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, text TEXT NOT NULL)")
     }
     override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) { if (old < 2) db.execSQL("ALTER TABLE entries ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0") }
-    fun entries(kind: String? = null, trash: Boolean = false): List<Entry> = readableDatabase.query("entries", null, "deleted${if (trash) ">0" else "=0"}" + if (kind == null) "" else " AND kind=?", kind?.let { arrayOf(it) }, null, null, "created DESC").use { c ->
+    fun entries(kind: String? = null, trash: Boolean = false, limit: Int? = null): List<Entry> = readableDatabase.query("entries", null, "deleted${if (trash) ">0" else "=0"}" + if (kind == null) "" else " AND kind=?", kind?.let { arrayOf(it) }, null, null, "created DESC", limit?.coerceIn(1, 10000)?.toString()).use { c ->
+        buildList { while (c.moveToNext()) add(Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4))) }
+    }
+    fun countActive(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM entries WHERE deleted=0", null).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    fun search(kind: String, query: String, limit: Int = 200): List<Entry> {
+        val pattern = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        return readableDatabase.rawQuery("SELECT id,kind,text,done,due FROM entries WHERE deleted=0 AND kind=? AND text LIKE ? ESCAPE '\\' ORDER BY created DESC LIMIT ?", arrayOf(kind, pattern, limit.coerceIn(1, 1000).toString())).use { c ->
+            buildList { while (c.moveToNext()) add(Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4))) }
+        }
+    }
+    fun memoryCandidates(): List<Entry> = readableDatabase.rawQuery("SELECT id,kind,substr(text,1,600),done,due FROM entries WHERE deleted=0 AND kind='memory' ORDER BY created DESC LIMIT 64", null).use { c ->
         buildList { while (c.moveToNext()) add(Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4))) }
     }
     fun add(kind: String, text: String, due: Long = 0): String {
@@ -30,12 +40,20 @@ class Store(context: Context) : SQLiteOpenHelper(context, "friday.db", null, 2) 
     fun toggle(entry: Entry) = writableDatabase.update("entries", ContentValues().apply { put("done", if (entry.done) 0 else 1) }, "id=?", arrayOf(entry.id))
     fun edit(entry: Entry, text: String) = writableDatabase.update("entries", ContentValues().apply { put("text", text.take(16000)) }, "id=?", arrayOf(entry.id))
     fun reschedule(id: String, due: Long) = writableDatabase.update("entries", ContentValues().apply { put("due", due); put("done", 0) }, "id=? AND kind='task' AND deleted=0", arrayOf(id))
-    fun pendingTasks() = entries("task").filter { !it.done && it.due > System.currentTimeMillis() }
-    fun find(id: String): Entry? = entries().firstOrNull { it.id == id }
+    fun openTasks(limit: Int = 12): List<Entry> = readableDatabase.rawQuery("SELECT id,kind,substr(text,1,600),done,due FROM entries WHERE deleted=0 AND kind='task' AND done=0 ORDER BY CASE WHEN due>0 THEN due ELSE 32503680000000 END, created DESC LIMIT ?", arrayOf(limit.coerceIn(1, 1000).toString())).use { c ->
+        buildList { while (c.moveToNext()) add(Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4))) }
+    }
+    fun countOpenTasks(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM entries WHERE deleted=0 AND kind='task' AND done=0", null).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    fun pendingTasks(): List<Entry> = readableDatabase.rawQuery("SELECT id,kind,substr(text,1,200),done,due FROM entries WHERE deleted=0 AND kind='task' AND done=0 AND due>?", arrayOf(System.currentTimeMillis().toString())).use { c ->
+        buildList { while (c.moveToNext()) add(Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4))) }
+    }
+    fun find(id: String): Entry? = readableDatabase.rawQuery("SELECT id,kind,text,done,due FROM entries WHERE deleted=0 AND id=?", arrayOf(id)).use { c ->
+        if (c.moveToFirst()) Entry(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0, c.getLong(4)) else null
+    }
     fun delete(id: String) = writableDatabase.update("entries", ContentValues().apply { put("deleted", System.currentTimeMillis()) }, "id=?", arrayOf(id))
     fun restore(id: String) = writableDatabase.update("entries", ContentValues().apply { put("deleted", 0) }, "id=?", arrayOf(id))
     fun emptyTrash() = writableDatabase.delete("entries", "deleted>0", null)
-    fun chats(): List<ChatLine> = readableDatabase.rawQuery("SELECT role,text FROM (SELECT * FROM chats ORDER BY id DESC LIMIT 100) ORDER BY id", null).use { c -> buildList { while (c.moveToNext()) add(ChatLine(c.getString(0), c.getString(1))) } }
+    fun chats(limit: Int = 100): List<ChatLine> = readableDatabase.rawQuery("SELECT role,text FROM (SELECT * FROM chats ORDER BY id DESC LIMIT ?) ORDER BY id", arrayOf(limit.coerceIn(1, 100).toString())).use { c -> buildList { while (c.moveToNext()) add(ChatLine(c.getString(0), c.getString(1))) } }
     fun chat(role: String, text: String) {
         writableDatabase.insertOrThrow("chats", null, ContentValues().apply { put("role", role); put("text", text.take(16000)) })
         writableDatabase.execSQL("DELETE FROM chats WHERE id NOT IN (SELECT id FROM chats ORDER BY id DESC LIMIT 100)")
