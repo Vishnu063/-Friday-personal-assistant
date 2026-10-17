@@ -114,7 +114,7 @@ class MainActivity : FragmentActivity() {
         }
     }
     private var appChoices by mutableStateOf<List<Pair<String, String>>>(emptyList())
-    private val microphone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) voice.listen() else { voiceMode = false; voice.conversation = false; vm.notice = "Voice needs microphone access. You can still type." } }
+    private val microphone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted && (!vm.appLock || sessionUnlocked)) voice.listen() else { voiceMode = false; voice.conversation = false; vm.notice = "Voice needs microphone access. You can still type." } }
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (!it) vm.notice = "Notifications are off. Tasks are saved, but reminder alerts will not appear until enabled." }
     private val modelPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(vm::importModel) }
     private val documentPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -161,7 +161,7 @@ class MainActivity : FragmentActivity() {
                     }
                     return@MaterialTheme
                 }
-                LaunchedEffect(sessionUnlocked, inputVersion) { if (sessionUnlocked) consumeIncoming() }
+                LaunchedEffect(sessionUnlocked, inputVersion) { voice.foreground = sessionUnlocked; if (sessionUnlocked) consumeIncoming() }
                 LaunchedEffect(vm.speechText) { if (vm.speakReplies && vm.speechText.isNotBlank()) voice.speak(vm.speechText) }
                 LaunchedEffect(vm.language, vm.offlineVoice, vm.speechRate) { voice.language = vm.language; voice.offlineOnly = vm.offlineVoice; voice.rate = vm.speechRate }
                 FridayApp()
@@ -169,7 +169,7 @@ class MainActivity : FragmentActivity() {
         }
     }
     override fun onResume() { super.onResume(); permissionEpoch++ }
-    override fun onStart() { super.onStart(); if (::voice.isInitialized) { voice.foreground = true; vm.foreground(true) } }
+    override fun onStart() { super.onStart(); if (::voice.isInitialized) { voice.foreground = !vm.appLock || sessionUnlocked; vm.foreground(true) } }
     override fun onStop() { if (::voice.isInitialized) { voice.foreground = false; voice.releaseSpeech(); voiceMode = false; voiceTarget = null; if (vm.appLock) sessionUnlocked = false; vm.foreground(false) }; super.onStop() }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); pendingIncoming = intent; inputVersion++ }
     override fun onTrimMemory(level: Int) { super.onTrimMemory(level); if (::vm.isInitialized && level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) vm.releaseAI() }
@@ -202,7 +202,7 @@ class MainActivity : FragmentActivity() {
         if (!manager.isRequestPinShortcutSupported) vm.notice = "Your launcher does not support pinned shortcuts. Open Friday from its app icon."
         else if (!manager.requestPinShortcut(shortcut, null)) vm.notice = "The launcher did not accept the shortcut request."
     }
-    override fun onDestroy() { if (::voice.isInitialized) voice.destroy(); super.onDestroy() }
+    override fun onDestroy() { encryptionPassword?.fill('\u0000'); encryptionPassword = null; if (::voice.isInitialized) voice.destroy(); super.onDestroy() }
     private fun open(intent: Intent) { runCatching { startActivity(intent) }.onFailure { vm.notice = "No app is available for that action." } }
     private fun authenticate(title: String, action: () -> Unit) {
         voice.stop(); voiceMode = false
