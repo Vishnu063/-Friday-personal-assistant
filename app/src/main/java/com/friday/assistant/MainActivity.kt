@@ -127,7 +127,7 @@ class MainActivity : FragmentActivity() {
         }
     }
     private var appChoices by mutableStateOf<List<Pair<String, String>>>(emptyList())
-    private val microphone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted && (!vm.appLock || sessionUnlocked)) { if (voiceMode && vm.backgroundVoice && !vm.appLock) startVoiceSession(); voice.listen() } else { voiceMode = false; voice.conversation = false; vm.notice = "Voice needs microphone access. You can still type." } }
+    private val microphone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted && (!vm.appLock || sessionUnlocked)) { ensureBackgroundVoiceSession(); voice.listen() } else { voiceMode = false; voice.conversation = false; vm.notice = "Voice needs microphone access. You can still type." } }
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (!it) vm.notice = "Notifications are off. Tasks are saved, but reminder alerts will not appear until enabled." }
     private val modelPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(vm::importModel) }
     private val documentPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -267,14 +267,16 @@ class MainActivity : FragmentActivity() {
         if (vm.busy) { vm.brain.stop(); vm.notice = "Stopping generation. Tap the mic again when it finishes."; return }
         voice.conversation = voiceMode
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            if (voiceMode && vm.backgroundVoice && !vm.appLock) {
-                if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    vm.notice = "Allow notifications, then tap the mic again to start a visible background voice session."
-                    requestNotifications()
-                } else startVoiceSession()
-            }
+            ensureBackgroundVoiceSession()
             voice.listen()
         } else microphone.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    private fun ensureBackgroundVoiceSession() {
+        if (!voiceMode || !vm.backgroundVoice || vm.appLock) return
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            vm.notice = "Allow notifications, then tap the mic again to start a visible background voice session."
+            requestNotifications()
+        } else startVoiceSession()
     }
     private fun startVoiceSession() {
         if (backgroundSession || vm.appLock) return
