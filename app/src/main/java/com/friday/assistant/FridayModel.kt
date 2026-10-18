@@ -35,6 +35,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var trash by mutableStateOf(store.entries(trash = true, limit = 50)); private set
     var lastDeleted by mutableStateOf<Entry?>(null); private set
     var offlineVoice by mutableStateOf(prefs.getBoolean("offlineVoice", false)); private set
+    var backgroundVoice by mutableStateOf(prefs.getBoolean("backgroundVoice", false)); private set
     var speechRate by mutableFloatStateOf(prefs.getFloat("speechRate", 1f)); private set
     var modelProgress by mutableStateOf(""); private set
     var modelDiagnostic by mutableStateOf("Not tested on this phone yet"); private set
@@ -64,6 +65,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     }
     fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = if (value) emptyList() else store.chats(limit = 40); speechText = "" } }
     fun offlineVoice(value: Boolean) { offlineVoice = value; prefs.edit().putBoolean("offlineVoice", value).apply() }
+    fun backgroundVoice(value: Boolean) { backgroundVoice = value; prefs.edit().putBoolean("backgroundVoice", value).apply() }
     fun rate(value: Float) { speechRate = value.coerceIn(.6f, 1.4f); prefs.edit().putFloat("speechRate", speechRate).apply() }
     fun restoreItem(entry: Entry) { store.restore(entry.id); lastDeleted = null; refresh(); reschedule() }
     fun emptyTrash() { store.emptyTrash(); lastDeleted = null; refresh() }
