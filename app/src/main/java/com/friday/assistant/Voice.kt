@@ -102,18 +102,19 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
             override fun onEndOfSpeech() { if (currentSession == session) status("Transcribing…") }
             override fun onError(error: Int) {
                 if (currentSession != session || !foreground || closed) return
-                endInput()
+                session++; endInput()
                 status(when (error) { SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Didn't catch that. Tap mic to retry."; SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission is needed for voice."; else -> "Voice unavailable (code $error). Try typing or changing language." })
                 recognizer?.destroy(); recognizer = null
             }
             override fun onResults(results: Bundle?) {
                 if (!foreground || closed || currentSession != session) return
+                session++
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
                 recognizer?.destroy(); recognizer = null; endInput(); beep(true); status("Ready")
                 if (text != null) result(text)
             }
             override fun onPartialResults(partialResults: Bundle?) {
-                if (currentSession == session && foreground && !closed) partial(partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().take(6000))
+                if (currentSession == session && listening && foreground && !closed) partial(partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().take(6000))
             }
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
         })

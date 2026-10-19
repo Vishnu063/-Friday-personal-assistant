@@ -19,6 +19,7 @@ class DictationTest {
     @Test fun cleanupPreservesNumbersAndWordBoundaries() {
         assertEquals("Kubernetes has 12 pods at 10:30, Kumar", DictationText.clean("cube has 12 pods at 10:30, Kumar", "cube => Kubernetes", true))
         assertEquals("aluminum humble 50", DictationText.clean("um, aluminum uh humble 50", "", true))
+        assertEquals("नामी व्यक्ति १२", DictationText.clean("नामी नाम १२", "नाम => व्यक्ति", false))
         assertEquals("VISHNU", DictationText.clean("VISHNU", "Vishnu", false)) // suggestions do not rewrite words
     }
     @Test fun dictionaryUsesLiteralPatternsAndReplacementText() {

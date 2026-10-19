@@ -4,13 +4,17 @@
 
 A calm, private space to talk, remember, plan and get things done. **No Ollama, OpenClaw, paid AI API key or always-on computer required.**
 
-> **Early Android preview (0.3).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
+> **Early Android preview (0.4).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
 **Verified v0.3 preview:** [download Friday 0.3.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39037607865/artifacts/12103280392). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
 
-## New in 0.3
+## New in 0.4
+
+Editable voice review, live partial transcripts, tap/hold dictation, longer phrase collection, custom vocabulary, optional filler cleanup, bounded transcript history, recording feedback, audio-focus requests and AI idle memory controls. See [voice setup below](#voice-and-dictation-04). No new paid API.
+
+## Previous additions in 0.3
 
 Simpler Home, PIN/fingerprint app lock, Android Share reception, pinned Talk/Note shortcuts, password-encrypted backups, more fast commands, and compact AI context with idle/background unloading. Saved lists and preference retrieval are bounded. [v0.3 guide](docs/VERSION_0_3.md). Physical-phone RAM and battery benchmarks are pending.
 
@@ -39,7 +43,7 @@ A [signed-release workflow](docs/RELEASE_SIGNING.md) is prepared; its private si
 | Area | Available in the Android app |
 |---|---|
 | Chat | On-device LiteRT-LM inference, streaming responses, stop generation, bounded recent conversation context |
-| Voice | Hindi/English system recognition and TTS; mic interrupts playback; optional foreground conversation loop |
+| Voice | Hindi/English system recognition and TTS; mic interrupts playback; editable dictation review, live text when supported, optional foreground-service conversation loop |
 | Personal memory | Explicitly saved, editable/deletable preferences; toggle whether to include them in AI prompts |
 | Notes & tasks | Local notes, editable checklists, approximate notification reminders, future reminder restoration after reboot |
 | Daily briefing | On-demand summary of your open tasks |
@@ -74,7 +78,7 @@ Command shortcuts currently use English, with a small set of Hindi phone command
 
 ## Permission controls
 
-- **Microphone:** asked only when you use voice. No background wake word or microphone service. Android recognition/TTS providers may use the internet; Friday discloses that before first voice use. On supported Android 12+ devices Friday selects the on-device recognizer.
+- **Microphone:** asked only when you use voice. No background wake word. Optional background conversation requires explicit setup, an active foreground-service notification and a manual mic tap; app lock disables it. Android recognition/TTS providers may use the internet; Friday discloses that before first voice use. On supported Android 12+ devices Friday selects the on-device recognizer.
 - **Notifications:** requested for reminders. Alarms are approximate; battery optimisation and denied permission can delay/prevent alerts. No exact-alarm special permission. v0.2 adds overdue views, rescheduling and a diagnostics delivery test.
 - **Accessibility:** optional, explicitly disclosed before opening Android settings. No screenshot recording, gesture injection, automatic clicking, or event-based text collection. A fresh authenticated screen request expires in 60 seconds and is consumed once. Android password nodes are excluded, but other sensitive visible text can still appear: always review the preview.
 - **Lock/power:** device credentials or strong biometrics authorise each request. A spoken code like `pass 50` is **not** a security credential. Android may restrict actions on individual devices. Friday opens the power menu; it cannot silently switch off a standard phone.

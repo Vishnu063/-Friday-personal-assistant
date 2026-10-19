@@ -14,11 +14,11 @@ object DictationText {
         dictionary.lineSequence().take(50).forEach { line ->
             val parts = line.split("=>", limit = 2).map { it.trim().take(80) }
             if (parts.size == 2 && parts.all { it.isNotBlank() }) {
-                val pattern = Regex("(?<![\\p{L}\\p{N}_])${Regex.escape(parts[0])}(?![\\p{L}\\p{N}_])", RegexOption.IGNORE_CASE)
+                val pattern = Regex("(?<![\\p{L}\\p{M}\\p{N}_])${Regex.escape(parts[0])}(?![\\p{L}\\p{M}\\p{N}_])", RegexOption.IGNORE_CASE)
                 value = pattern.replace(value) { parts[1] }
             }
         }
-        if (fillers) value = value.replace(Regex("(?i)(?<![\\p{L}\\p{N}_])(um|uh|erm)(?![\\p{L}\\p{N}_])[, ]*"), "")
+        if (fillers) value = value.replace(Regex("(?i)(?<![\\p{L}\\p{M}\\p{N}_])(um|uh|erm)(?![\\p{L}\\p{M}\\p{N}_])[, ]*"), "")
         return value.replace(Regex("[ \\t]+"), " ").trim().take(6000)
     }
 }

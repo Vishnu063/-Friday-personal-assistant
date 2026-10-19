@@ -9,7 +9,7 @@ This checklist is intentionally separate from CI. A successful APK build is not 
 - [ ] Import actual compatible .litertlm model; test first load, streaming, stop, repeated prompts, rotation, app backgrounding and low-memory behaviour.
 - [ ] Wrong model type, bad file, insufficient storage and unavailable engine recover without damaging existing data.
 - [ ] Deny microphone; typing remains available. Test English/Hindi; verify the selected provider's offline behaviour in airplane mode.
-- [ ] Stop/interrupt playback; conversation restarts after speech only while foreground; backgrounding stops capture/playback.
+- [ ] Stop/interrupt playback; conversation restarts after speech only in an active session; backgrounding stops capture/playback unless explicitly enabled with a visible foreground-service notification. App lock and the notification Stop action must stop the session.
 - [ ] Deny notifications; app explains missing alerts. Test a future reminder, completion/deletion cancellation, restart and reboot restoration.
 - [ ] Accessibility initially disabled; no reading occurs before explicit setup + authentication + shortcut click.
 - [ ] Screen grant expires after 60 seconds and is consumed once; password text excluded; protected app produces a useful empty-state result.
@@ -45,3 +45,15 @@ Record model name, phone model, RAM, Android version, first-token latency, error
 - Compare idle/background/active-AI RAM on the same phone/model. Verify 45-second release, background generation stop, reload and compact/balanced switching.
 - Search an older note/task/project beyond 200 entries, and check literal percent/underscore searches.
 - Test voice interruption, first-use TTS, conversation mode and backgrounding.
+
+## v0.4 voice checks
+
+- [ ] First-use disclosure/denied mic permission in tap and hold modes: no listening after releasing a permission-only press. Coach dictation still works after granting permission.
+- [ ] Fast press/release before recognizer readiness, release after speech, second tap, provider error and app background/lock all release capture cleanly.
+- [ ] Partial text does not execute commands; final review edits, Send, Discard and Add phrase route only the approved final text. Try Hindi and English names/numbers.
+- [ ] Long dictation collects multiple phrases up to 6,000 characters; cancellation/provider timeout preserves collected phrases for Review collected text.
+- [ ] Custom suggestions are provider-dependent; literal replacements do not change substrings/numbers unexpectedly.
+- [ ] History off/private chat saves nothing; 1/7-day history is bounded, refresh prunes old entries, single deletion preserves others, and erase removes vocabulary/history. Check backup exclusion.
+- [ ] Friday TTS stops before listening; test optional start/stop sounds and audio-focus request against another media player. Verify focus is released on errors/cancel as well as results.
+- [ ] Connect/disconnect wired/Bluetooth headsets and document actual provider routing. There is no forced input selection.
+- [ ] Compare 5s/45s/5min AI release, repeated prompt loading, background release, and changing the option during generation.
