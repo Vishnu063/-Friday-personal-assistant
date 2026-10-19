@@ -23,7 +23,7 @@ object DictationText {
     }
 }
 
-data class Transcript(val text: String, val time: Long)
+data class Transcript(val text: String, val time: Long, val id: String = java.util.UUID.randomUUID().toString())
 
 class DictationSettings(context: Context) {
     private val prefs = context.getSharedPreferences("dictation", 0)
@@ -46,14 +46,14 @@ class DictationSettings(context: Context) {
         val cutoff = System.currentTimeMillis() - retention * 86400000L
         history = if (retention == 0) emptyList() else runCatching {
             val data = JSONArray(prefs.getString("history", "[]"))
-            (0 until data.length()).map { val item = data.getJSONObject(it); Transcript(item.getString("text").take(6000), item.getLong("time")) }
+            (0 until data.length()).map { val item = data.getJSONObject(it); Transcript(item.getString("text").take(6000), item.getLong("time"), item.optString("id").ifBlank { java.util.UUID.randomUUID().toString() }) }
                 .filter { it.time >= cutoff }.takeLast(20)
         }.getOrDefault(emptyList())
         persist()
     }
     fun remember(text: String, privateMode: Boolean) { refresh(); if (!privateMode && retention > 0) { history = (history + Transcript(text.take(6000), System.currentTimeMillis())).takeLast(20); persist() } }
-    fun delete(time: Long) { history = history.filterNot { it.time == time }; persist() }
+    fun delete(id: String) { history = history.filterNot { it.id == id }; persist() }
     fun clear() { history = emptyList(); persist() }
     fun erase() { words(""); clear() }
-    private fun persist() { val data = JSONArray(); history.forEach { data.put(JSONObject().put("text", it.text).put("time", it.time)) }; prefs.edit().putString("history", data.toString()).apply() }
+    private fun persist() { val data = JSONArray(); history.forEach { data.put(JSONObject().put("text", it.text).put("time", it.time).put("id", it.id)) }; prefs.edit().putString("history", data.toString()).apply() }
 }

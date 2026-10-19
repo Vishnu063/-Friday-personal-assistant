@@ -35,8 +35,8 @@ class DictationTest {
         repeat(25) { settings.remember("phrase $it", false) }
         assertEquals(20, settings.history.size)
         assertEquals("phrase 5", DictationSettings(context).history.first().text)
-        settings.delete(settings.history.first().time)
-        assertFalse(settings.history.any { it.text == "phrase 5" })
+        settings.delete(settings.history.first().id)
+        assertFalse(settings.history.any { it.text == "phrase 5" }); assertEquals(19, settings.history.size)
         settings.retention(0)
         assertTrue(DictationSettings(context).history.isEmpty())
     }

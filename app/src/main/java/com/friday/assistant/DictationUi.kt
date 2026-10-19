@@ -28,7 +28,7 @@ fun DictationOptions(settings: DictationSettings, privateMode: Boolean, reuse: (
     if (!privateMode) settings.history.asReversed().forEach { item ->
         Text(DateFormat.getDateTimeInstance().format(Date(item.time)), style = MaterialTheme.typography.labelSmall)
         Text(item.text.take(300))
-        Row { TextButton(onClick = { reuse(item.text) }) { Text("Review again") }; TextButton(onClick = { settings.delete(item.time) }) { Text("Delete") } }
+        Row { TextButton(onClick = { reuse(item.text) }) { Text("Review again") }; TextButton(onClick = { settings.delete(item.id) }) { Text("Delete") } }
     }
     TextButton(onClick = settings::clear) { Text("Delete all transcripts") }
     Text("Microphone routing follows Android and your speech provider. Connect your headset before recording; Friday cannot guarantee a chosen input with system recognition. Audio focus requests depend on other apps and Android. No global volume changes.", style = MaterialTheme.typography.bodySmall)
