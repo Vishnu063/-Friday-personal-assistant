@@ -1,5 +1,19 @@
 # Validation record
 
+## Friday 0.4.0 — 19 October 2026 (UTC)
+
+- Tested application source commit: `ce55c48819de529b851c63893de34f83a54feb3a` (PR #2). Subsequent documentation changes link this build; they do not change application source.
+- [Successful workflow](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39183421587).
+- Command: `gradle testDebugUnitTest lintDebug assembleDebug --stacktrace`.
+- Unit tests, lint, APK assembly and artifact uploads passed.
+- [Download v0.4 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39183421587/artifacts/12156913819), 45,351,280 bytes compressed.
+- GitHub artifact ZIP SHA-256: `21b61b8eeeb45977c1b72d99d8aa392ee2431658c87bfb48745d3aa18ad0897e`.
+- [Test and lint reports](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39183421587/artifacts/12156829209).
+
+New tests cover Unicode word boundaries (including Hindi combining marks), literal custom replacements, preserved numbers, bounded text, preference persistence, opt-in/private-mode history, expiration, the 20-entry cap and deletion. Existing tests also passed.
+
+Phone-specific voice quality, partial-result/vocabulary support, headsets, audio focus, hold/release, background sessions and model memory/latency are still pending the [device checklist](DEVICE_TESTING.md). No new neural speech model, full grammar checker, forced microphone selector or paid API is included. Export before migrating between debug signing identities. Artifacts expire after 30 days and require a GitHub login.
+
 ## Friday 0.3.0 — 17 October 2026 (UTC)
 
 - APK source commit: `a97bb2b064f405163ea221ee3e02896857c5f249`.
@@ -40,4 +54,4 @@ This is an installable preview with tested repository logic, not a guarantee of 
 
 ## Previous version
 
-[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.3 artifact above.
+[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.4 artifact above.
