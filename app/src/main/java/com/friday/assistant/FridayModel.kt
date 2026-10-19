@@ -43,6 +43,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var appLock by mutableStateOf(prefs.getBoolean("appLock", false)); private set
     var compactMode by mutableStateOf(prefs.getBoolean("compactMode", true)); private set
     var aiLoaded by mutableStateOf(false); private set
+    var idleSeconds by mutableIntStateOf(prefs.getInt("idleSeconds", 45).let { if (it in listOf(5, 45, 300)) it else 45 }); private set
+    fun idleSeconds(value: Int) { if (value !in listOf(5, 45, 300)) return; idleSeconds = value; prefs.edit().putInt("idleSeconds", value).apply(); if (!busy) scheduleRelease() }
     private var idleJob: Job? = null
     var revision by mutableIntStateOf(0); private set
     private var foreground = true
@@ -53,7 +55,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     private fun scheduleRelease() {
         idleJob?.cancel()
         if (!foreground) { releaseAI(); return }
-        idleJob = viewModelScope.launch { delay(45000); brain.unload(); aiLoaded = false }
+        idleJob = viewModelScope.launch { delay(idleSeconds * 1000L); if (!busy) { brain.unload(); aiLoaded = false } }
     }
     fun releaseAI() {
         idleJob?.cancel(); brain.stop()

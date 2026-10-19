@@ -1,4 +1,4 @@
-# Privacy and action boundaries — v0.2
+# Privacy and action boundaries
 
 Friday's chat model runs on your phone. There is no cloud LLM client or chat-upload feature. **v0.2 adds internet permission for an optional model-file download that you explicitly review and start; third-party OCR SDK networking must also be considered.** Friday implements no background model download, chat/screen/resume uploader or app analytics client. However, Google ML Kit collects device/app information and SDK performance/usage metrics under its own terms. Its OCR image inputs and recognised outputs are processed on-device and are not sent to Google according to its disclosure: https://developers.google.com/ml-kit/android-data-disclosure and https://developers.google.com/ml-kit/terms. The app explains this before first OCR use. SDK initialisation behaviour and Android providers are outside the local chat model; this is not a zero-telemetry guarantee. Android speech/TTS, browsers and apps you open have their own provider policies.
 
@@ -20,7 +20,7 @@ Friday's own model transfer starts only from Settings → Review download → Do
 
 ## Voice
 
-Foreground voice only; no microphone service or wake word. Delayed recognition/playback callbacks are ignored after stop/new sessions. Strict offline mode requires on-device Android recognition and an installed offline TTS voice, otherwise the app asks you to type/install a voice. Availability of an Android language pack remains device/provider dependent. In normal mode providers may use the internet; read-aloud sends text to your selected TTS engine. This system-service voice is not a guarantee of ChatGPT voice quality.
+Voice starts after a user action. Optional background conversation uses a microphone foreground service with a visible Stop notification; app lock disables background mode. There is no wake word. Delayed recognition/playback callbacks are ignored after stop/new sessions. Strict offline mode requires on-device Android recognition and an installed offline TTS voice, otherwise the app asks you to type/install a voice. Availability of an Android language pack remains device/provider dependent. In normal mode providers may use the internet; read-aloud sends text to your selected TTS engine. This system-service voice is not a guarantee of ChatGPT voice quality.
 
 ## Screen and phone actions
 
@@ -33,3 +33,11 @@ Calls/SMS open the dialer/composer for final user confirmation. Career search op
 ## v0.3 app lock, sharing and backups
 
 App lock gates the UI using device authentication and blocks screenshots/recents. It is not database encryption. Android Share content is temporary until explicitly saved; it never enters the command router automatically. Encrypted exports use password-based AES-256-GCM with random salt/nonce and PBKDF2-HMAC-SHA256 (210,000 iterations). Passwords are not persisted and cannot be recovered. Plain JSON export remains available as an advanced option. Backup imports do not grant permissions or enable app lock. See [v0.3 details](VERSION_0_3.md).
+
+## v0.4 dictation
+
+Voice results are reviewed before submission by default. Partial/final text and edits remain temporary until Send; no command runs from the live transcript. Disabling review permits recognised text to enter the existing direct command router. Literal vocabulary replacements and optional English filler cleanup can alter text, so review is recommended. Language/spelling suggestions are sent to the selected Android recognizer as part of recognition; its policies apply.
+
+Optional approved-transcript history is off by default, limited to 20 entries and 1 or 7 days. It uses private app preferences, is not independently encrypted, and is excluded from backup exports. Retention is pruned at startup/refresh/save, not by continuous background deletion. Private chat skips new transcript history and hides existing entries; explicit deletion is still available. Individual/all deletion and Erase personal data remove transcript history; Erase also removes custom vocabulary. This does not securely overwrite flash or delete external copies. Friday stores no raw microphone recording. Review drafts are cleared when app lock locks the app; ordinary backgrounding may retain a draft in process memory.
+
+Audio focus is requested only during recognition if enabled and abandoned on result/error/cancel. It does not change global media volume. System recognition controls hardware routing. AI idle-unload options change RAM/startup tradeoffs, not data upload policy.

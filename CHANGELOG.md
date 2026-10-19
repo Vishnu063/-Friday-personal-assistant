@@ -1,3 +1,13 @@
+# 0.4.0
+
+- Reviewed/editable voice dictation by default; live partial text where the provider supports it.
+- Tap/hold mic controls and explicit phrase collection for long dictation.
+- Personal vocabulary biasing (provider dependent), literal replacements and optional filler cleanup.
+- Optional 20-entry transcript history, retention, private-mode exclusion and deletion; no raw audio storage.
+- Optional recording sounds/audio focus; 5-second/45-second/5-minute idle AI unloading.
+- Document Android headset/provider limits; no bundled desktop voice model or new paid API.
+- Regression coverage for text boundaries, literal replacements, bounds, persistence, privacy and retention.
+
 # 0.3.0
 
 - Simple Home and three main navigation destinations.
