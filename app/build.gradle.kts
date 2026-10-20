@@ -24,6 +24,7 @@ android {
         }
         buildTypes.getByName("release") { signingConfig = signingConfigs.getByName("privateRelease") }
     }
+    testOptions { unitTests.isIncludeAndroidResources = true }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }

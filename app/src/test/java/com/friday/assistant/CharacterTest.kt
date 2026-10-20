@@ -19,7 +19,6 @@ import org.robolectric.shadows.ShadowSettings
 class CharacterTest {
     private lateinit var context: Application
     @Before fun setup() {
-        org.robolectric.shadows.ShadowLog.stream = System.out
         context=RuntimeEnvironment.getApplication()
         CharacterPreferences(context).clear()
         ShadowSettings.setCanDrawOverlays(false)
@@ -57,11 +56,13 @@ class CharacterTest {
         ShadowSettings.setCanDrawOverlays(true)
         val controller=Robolectric.buildService(CharacterOverlayService::class.java).create()
         val service=controller.get()
-        service.onStartCommand(Intent(context,CharacterOverlayService::class.java),0,1)
-        assertTrue("overlay=" + Settings.canDrawOverlays(service) + ", notifications=" + androidx.core.app.NotificationManagerCompat.from(service).areNotificationsEnabled(), CharacterOverlayService.running)
-        service.onTaskRemoved(Intent())
-        assertTrue(shadowOf(service).isStoppedBySelf)
-        controller.destroy()
+        try {
+            service.onStartCommand(Intent(context,CharacterOverlayService::class.java),0,1)
+            val log=org.robolectric.shadows.ShadowLog.getLogsForTag("FridayCharacter").joinToString { it.msg + ": " + it.throwable }
+            assertTrue("Overlay startup failed: " + log, CharacterOverlayService.running)
+            service.onTaskRemoved(Intent())
+            assertTrue(shadowOf(service).isStoppedBySelf)
+        } finally { controller.destroy() }
         assertFalse(CharacterOverlayService.running)
     }
     @Test fun stopActionNeverCreatesAnOverlay() {
