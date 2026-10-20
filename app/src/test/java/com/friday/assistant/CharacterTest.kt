@@ -58,7 +58,7 @@ class CharacterTest {
         val controller=Robolectric.buildService(CharacterOverlayService::class.java).create()
         val service=controller.get()
         service.onStartCommand(Intent(context,CharacterOverlayService::class.java),0,1)
-        assertTrue(CharacterOverlayService.running)
+        assertTrue("overlay=" + Settings.canDrawOverlays(service) + ", notifications=" + androidx.core.app.NotificationManagerCompat.from(service).areNotificationsEnabled(), CharacterOverlayService.running)
         service.onTaskRemoved(Intent())
         assertTrue(shadowOf(service).isStoppedBySelf)
         controller.destroy()
