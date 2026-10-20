@@ -66,6 +66,7 @@ import java.util.Date
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("LinkedIn referral assistant", style = MaterialTheme.typography.headlineMedium)
+            LinkedInPanel(vm)
             Text("Review drafts locally. LinkedIn is where you check the conversation and send. Friday does not read your account or send messages automatically.")
             OutlinedButton(enabled = !loading, onClick = { connectionsPicker.launch(arrayOf("text/*", "application/octet-stream", "application/vnd.ms-excel")) }) { Text("1. Import Connections.csv") }
             OutlinedButton(enabled = !loading, onClick = { messagesPicker.launch(arrayOf("text/*", "application/octet-stream", "application/vnd.ms-excel")) }) { Text("2. Import messages.csv") }

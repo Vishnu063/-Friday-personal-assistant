@@ -17,6 +17,7 @@ import java.io.File
 class FridayModel(application: Application) : AndroidViewModel(application) {
     val store = Store(application)
     val referrals = Referrals(application)
+    val linkedin = LinkedInConnection(application)
     val brain = LocalBrain(application)
     private val prefs = application.getSharedPreferences("friday", 0)
     var messages by mutableStateOf(store.chats(limit = 40)); private set
@@ -187,7 +188,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun erasePersonalData() {
         if (busy) return
         store.pendingTasks().forEach { Reminders.cancel(getApplication(), it.id) }
-        store.clear(); referrals.clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
+        store.clear(); referrals.clear(); linkedin.disconnect(); DeviceChecks(getApplication()).clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
         notice = "Chats, notes, tasks, memories, trash, career/project/practice/referral data and resume erased. Remove the model separately in Settings."
     }
     override fun onCleared() {

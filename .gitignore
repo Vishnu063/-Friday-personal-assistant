@@ -8,3 +8,6 @@ local.properties
 *.task
 .env
 .kotlin/
+
+__pycache__/
+*.pyc

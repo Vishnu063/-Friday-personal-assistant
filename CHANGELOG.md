@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 20 October 2026
+
+- Added experimental authenticated read-only LinkedIn companion and Android connection UI, with verified account/recipient binding, Android Keystore token encryption and explicit unknown-history results. No automatic sending.
+- Added per-version owner-recorded device acceptance checks, reviewed report sharing and installed signing identity in Diagnostics. No physical test results or private signing credentials are invented.
+- Added companion HTTP/subprocess failure tests and Android wire/checklist regression tests.
+
 ## 0.5.0 — 20 October 2026
 
 - Added local LinkedIn referral review: bounded CSV import, recorded-history exclusions in either direction, identity checks, editable drafts and persistent prepared/sent/excluded states. Actual sending stays in LinkedIn.
