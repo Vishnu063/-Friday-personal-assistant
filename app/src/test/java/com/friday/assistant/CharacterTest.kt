@@ -19,6 +19,7 @@ import org.robolectric.shadows.ShadowSettings
 class CharacterTest {
     private lateinit var context: Application
     @Before fun setup() {
+        org.robolectric.shadows.ShadowLog.stream = System.out
         context=RuntimeEnvironment.getApplication()
         CharacterPreferences(context).clear()
         ShadowSettings.setCanDrawOverlays(false)

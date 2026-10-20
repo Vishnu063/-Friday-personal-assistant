@@ -89,7 +89,7 @@ class CharacterOverlayService : Service() {
             running = true
             updateVisibility()
             state("Floating character active. Minimize Friday to use it over your other apps.")
-        } catch (_: Exception) { state("Android could not show the floating character. Check overlay access and reopen Friday."); stopSelf() }
+        } catch (error: Exception) { android.util.Log.w("FridayCharacter", "Cannot show floating companion", error); state("Android could not show the floating character. Check overlay access and reopen Friday."); stopSelf() }
         return START_NOT_STICKY
     }
     private fun talkIntent() = Intent(this, MainActivity::class.java).setAction("com.friday.assistant.TALK")
