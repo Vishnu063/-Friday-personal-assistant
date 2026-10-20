@@ -16,6 +16,7 @@ import java.io.File
 
 class FridayModel(application: Application) : AndroidViewModel(application) {
     val store = Store(application)
+    val referrals = Referrals(application)
     val brain = LocalBrain(application)
     private val prefs = application.getSharedPreferences("friday", 0)
     var messages by mutableStateOf(store.chats(limit = 40)); private set
@@ -186,13 +187,13 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun erasePersonalData() {
         if (busy) return
         store.pendingTasks().forEach { Reminders.cancel(getApplication(), it.id) }
-        store.clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
-        notice = "Chats, notes, tasks, memories, trash, career/project/practice data and resume erased. Remove the model separately in Settings."
+        store.clear(); referrals.clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
+        notice = "Chats, notes, tasks, memories, trash, career/project/practice/referral data and resume erased. Remove the model separately in Settings."
     }
     override fun onCleared() {
         idleJob?.cancel(); brain.stop()
         // The viewModel job cancels first; serialize native release after inference is drained.
         val executor = Executors.newSingleThreadExecutor()
-        executor.execute { kotlinx.coroutines.runBlocking { brain.unload() }; store.close(); executor.shutdown() }
+        executor.execute { kotlinx.coroutines.runBlocking { brain.unload() }; store.close(); referrals.close(); executor.shutdown() }
     }
 }

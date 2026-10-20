@@ -1,0 +1,20 @@
+# LinkedIn referral review
+
+Open **Tools → Career dashboard → LinkedIn referral assistant**. This runs locally without a model, LinkedIn password, paid key or extra service. It helps review and copy a message; it does not send or inspect LinkedIn conversations automatically.
+
+1. Request your LinkedIn account archive using LinkedIn's **Settings & Privacy → Data privacy → Get a copy of your data**. Include connections and messages. Extract it using your file manager; Friday accepts the CSV files, not the ZIP. [Official connection export guide](https://www.linkedin.com/help/linkedin/answer/a566336/exporting-connections-from-linkedin).
+2. Import `Connections.csv`, then `messages.csv` from the same account. Imports are limited to 4 MB UTF-8 CSV, 2,000 connections and 20,000 message rows. Split larger files carefully with the same headers; connection imports replace the current visible connection list, while history imports accumulate. Existing sent/excluded states survive refreshes. Malformed or unidentifiable rows reject the whole import before changes.
+3. Enter your own name, target role, accurate experience and availability. Friday does not invent experience, scrape job openings or add a resume automatically. Filter by person/company.
+4. Recorded history in **either direction** excludes a person even when message content is blank. Participant URLs are matched when present; name matches also exclude same-name contacts conservatively. Group participants are checked. Manually exclude anyone whose identity or history is uncertain.
+5. Open the person's profile, open their LinkedIn chat and check for prior contact, including archived conversations. Return to Friday, review/edit the draft and check the live-history confirmation only when satisfied. Copy the draft and send it yourself in LinkedIn.
+6. Return to the person's draft review and choose **I already sent it — mark sent**. Copying alone records **prepared**, never claims delivery. A prepared record warns against resending; it can be reopened if you need the draft. Sent/excluded people cannot prepare another draft. Friday does not send anything when you copy or mark a state.
+
+## Important limits
+
+An export is evidence of **recorded history**, not proof that you have never spoken. Deleted chats, missing messages, renamed profiles, a stale export or a different account can hide contact. Even an empty history requires a live conversation check. If it cannot be verified, exclude the person. There is no bulk send, account login, background LinkedIn scraping, accessibility clicking or automatic sending in this version. The connected LinkedIn profile-search tool does not provide message access.
+
+Supported connection headers: `First Name,Last Name,URL`, optionally `Company,Position`. Header case is ignored. The export's introductory notes (up to ten lines), UTF-8 BOM, CRLF, commas, quoted newlines and escaped quotes are handled. Message headers must contain `FROM,TO`; optional `SENDER PROFILE URL,RECIPIENT PROFILE URLS` add identity matching. Participants separated by semicolons, commas or newlines are indexed. An unknown/deleted participant blocks that import rather than assuming no history. If your export differs, keep it private and do not force it into an incompatible schema.
+
+Only profile, name, company, role, contact state, import times and normalized participant identifiers are stored in the app's private `referrals.db`. Message bodies and complete exports are not retained. These records do not enter local AI prompts or Friday backups. **Erase personal data** also clears them. Clearing app data, uninstalling or moving to a different phone loses the ledger: reimport fresh history and check LinkedIn before contacting anyone again. Copying puts the approved draft on Android's clipboard, which has its own device access/expiry rules.
+
+The queue and CSV logic have automated Android/JVM tests. Live LinkedIn sending is intentionally absent, and no real messages are sent by repository tests.

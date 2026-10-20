@@ -401,7 +401,8 @@ class MainActivity : FragmentActivity() {
                         1 -> TasksPage()
                         2 -> MemoryPage()
                         3 -> ToolsPage()
-                        5 -> CareerDashboard(vm, ::openSearchOrLink) { title -> pickDue { due -> requestNotifications(); vm.save("task", title, due); vm.notice = "Follow-up reminder saved." } }
+                        5 -> CareerDashboard(vm, ::openSearchOrLink, { page = 10 }) { title -> pickDue { due -> requestNotifications(); vm.save("task", title, due); vm.notice = "Follow-up reminder saved." } }
+                        10 -> ReferralAssistant(vm)
                         6 -> InterviewCoach(vm, { voice.speak(it) }, { page = 0; vm.ask(it, ephemeral = true) }, { target -> voiceTarget = target; voiceMode = false; mic() })
                         7 -> ProjectMemory(vm, ::openSearchOrLink)
                         8 -> DiagnosticsPage()
@@ -748,6 +749,9 @@ class MainActivity : FragmentActivity() {
                  SettingToggle("Allow voice conversation in background", vm.backgroundVoice) { enabled -> vm.backgroundVoice(enabled); if (!enabled) stopVoiceSession() }
                 Text("Speech speed: ${"%.1f".format(vm.speechRate)}×", style = MaterialTheme.typography.bodySmall)
                 Slider(vm.speechRate, vm::rate, valueRange = .6f..1.4f)
+                OutlinedButton(onClick = { voice.conversation = false; voice.speak(if (vm.language.startsWith("hi")) "नमस्ते, मैं फ्राइडे हूँ। कृपया आवाज़ की गति और स्पष्टता जाँचें।" else "Hello, I am Friday. Please check my voice speed and clarity.") }) { Text("Preview selected voice") }
+                Text(voiceStatus, style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { voice.stop(); voiceMode = false }) { Text("Stop audio") }
                 SettingToggle("Speak Friday's replies", vm.speakReplies) { vm.speech(it); if (!it) voice.stop() }
                 SettingToggle("Use saved preferences in AI chat", vm.useMemory, vm::memory)
                 SettingToggle("Mint accent", vm.accentMint, vm::theme)
@@ -813,10 +817,12 @@ class MainActivity : FragmentActivity() {
             }
             Panel("Voice & permissions") {
                 Text(voice.health())
+                Text(voiceStatus, color = MaterialTheme.colorScheme.secondary)
                 Text("Microphone: ${if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) "allowed" else "not allowed"}")
                 Text("Notifications: ${if (notificationsEnabled) "enabled" else "off"}")
                 Text("Screen tools: ${if (ScreenService.instance != null) "enabled" else "off (optional)"}")
-                OutlinedButton(onClick = { voice.speak(if (vm.language.startsWith("hi")) "नमस्ते, मैं फ्राइडे हूँ।" else "Hello, I am Friday. Your voice test is working.") }) { Text("Test voice playback") }
+                OutlinedButton(onClick = { voice.speak(if (vm.language.startsWith("hi")) "नमस्ते, मैं फ्राइडे हूँ।" else "Hello, I am Friday. If you can hear this clearly, voice playback is working.") }) { Text("Test voice playback") }
+                OutlinedButton(onClick = { voice.stop(); voiceMode = false }) { Text("Stop playback / listening") }
                 OutlinedButton(onClick = { requestNotifications(); vm.save("task", "Friday reminder delivery test", System.currentTimeMillis() + 120000); vm.notice = "A test reminder is scheduled in about two minutes. Actual delivery must be checked on your phone." }) { Text("Schedule reminder delivery test") }
                 TextButton(onClick = { open(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }) { Text("Open battery settings") }
             }
