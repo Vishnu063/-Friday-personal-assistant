@@ -63,6 +63,7 @@ Record model name, phone model, RAM, Android version, first-token latency, error
 
 - Settings → Voice & personality: preview English and Hindi at slow/normal/fast rates. Check actual speaker volume, clarity and selected installed voice. Stop mid-sentence; ensure it stays stopped.
 - Read a document longer than 4,000 characters. Confirm the ending is audible, then interrupt another long playback with the mic and verify no queued part plays over recording. Try stopping before the TTS engine finishes loading, then preview again.
+- Stop the background-session notification while Friday is visible, then start a fresh mic request; the visible unlocked app must remain usable. Stop controls should also remove the session notification.
 - Test a missing language pack, offline-only voice, denied microphone/audio focus, Bluetooth/wired input and returning from background. These are device/provider dependent.
 - Import test connection/message CSV files under Career → LinkedIn referral assistant. Verify incoming/outgoing/group/blank-message exclusions, prepared/sent/excluded persistence after restart, and malformed-file errors without data loss. Check small screens/large fonts and the keyboard in draft review. Copy a harmless test draft; Friday must not send it.
 - Verify Erase personal data clears referrals. A backup restore must not falsely report that the referral ledger was restored. Never bulk-test by sending real messages.

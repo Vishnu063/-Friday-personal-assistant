@@ -1,6 +1,12 @@
 package com.friday.assistant
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ResolveInfo
+import android.content.pm.ServiceInfo
+import android.os.Bundle
+import android.speech.RecognitionService
+import android.speech.SpeechRecognizer
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import org.junit.After
@@ -14,6 +20,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
 import org.robolectric.shadows.ShadowTextToSpeech
+import org.robolectric.shadows.ShadowSpeechRecognizer
 import java.util.Locale
 
 /** Android speech-service simulations, not recorded microphone or acoustic tests. */
@@ -92,10 +99,10 @@ class VoiceTest {
         assertTrue(shadow.spokenTextList.isEmpty())
     }
     @Test fun unsupportedLanguageGivesAnActionableError() {
-        voice.language = "xx-XX"; voice.speak("Unavailable voice")
+        voice.language = "fr-FR"; voice.speak("Unavailable voice")
         val shadow = initialize()
         assertTrue(shadow.spokenTextList.isEmpty())
-        assertTrue(states.any { it.contains("Install the xx-XX voice") })
+        assertTrue(states.any { it.contains("Install the fr-FR voice") })
     }
     @Test fun strictOfflineRejectsMissingRecognizerInsteadOfListeningOnline() {
         voice.offlineOnly = true
@@ -110,4 +117,40 @@ class VoiceTest {
         assertTrue(chunks.all { it.length <= 4 && !Character.isHighSurrogate(it.last()) && !Character.isLowSurrogate(it.first()) })
         assertTrue(SpeechText.chunks("  ", 4).isEmpty())
     }
+    private fun recognitionProvider() {
+        val service = ResolveInfo().apply { serviceInfo = ServiceInfo().apply { packageName = "test.speech"; name = "Recognizer" } }
+        shadowOf(context.packageManager).addResolveInfoForIntent(Intent(RecognitionService.SERVICE_INTERFACE), service)
+    }
+    @Test fun recognitionDeliversHindiAndClearsListeningResources() {
+        recognitionProvider()
+        val results = mutableListOf<String>(); val partials = mutableListOf<String>()
+        voice.destroy(); voice = Voice(context, { states.add(it) }, { results.add(it) }, { partials.add(it) })
+        voice.language = "hi-IN"; voice.listen()
+        shadowOf(Looper.getMainLooper()).idle()
+        val recognizer = shadowOf(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
+        val text = Bundle().apply { putStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION, arrayListOf("नमस्ते फ्राइडे")) }
+        recognizer.triggerOnPartialResults(text)
+        assertEquals("नमस्ते फ्राइडे", partials.last())
+        recognizer.triggerOnResults(text)
+        assertEquals(listOf("नमस्ते फ्राइडे"), results)
+        assertFalse(voice.listening); assertTrue(recognizer.isDestroyed)
+        recognizer.triggerOnResults(text)
+        assertEquals(1, results.size) // late/duplicate engine callback must not execute twice
+    }
+    @Test fun recognitionAfterStopIsIgnoredAndPermissionFailureIsVisible() {
+        recognitionProvider()
+        val results = mutableListOf<String>()
+        voice.destroy(); voice = Voice(context, { states.add(it) }, { results.add(it) })
+        voice.listen(); shadowOf(Looper.getMainLooper()).idle()
+        val first = shadowOf(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
+        voice.stop()
+        first.triggerOnResults(Bundle().apply { putStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION, arrayListOf("must not submit")) })
+        assertTrue(results.isEmpty())
+        voice.listen(); shadowOf(Looper.getMainLooper()).idle()
+        val second = shadowOf(ShadowSpeechRecognizer.getLatestSpeechRecognizer())
+        second.triggerOnError(SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS)
+        assertFalse(voice.listening); assertTrue(second.isDestroyed)
+        assertTrue(states.last().contains("Microphone permission"))
+    }
+
 }

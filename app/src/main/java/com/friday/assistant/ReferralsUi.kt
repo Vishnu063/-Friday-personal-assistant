@@ -86,6 +86,7 @@ import java.util.Date
                     Text("${contact.company} • ${contact.position}")
                     Text(if (contact.prior) "Excluded: a previous message matches" else when (contact.state) { "prepared" -> "Draft previously copied — check LinkedIn before continuing"; "sent" -> "You marked this contact as sent"; "blocked" -> "Excluded by you"; else -> "Needs a live conversation check" })
                     OutlinedButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(contact.profile))) }.onFailure { status = "No app could open LinkedIn." } }) { Text("Open profile to check chat") }
+                    if (contact.state == "prepared") TextButton(enabled = !loading, onClick = { vm.referrals.mark(contact.profile, "sent"); status = "Marked sent by you: ${contact.name}"; revision++ }) { Text("I already sent it — mark sent") }
                     Button(enabled = imported > 0 && !contact.prior && contact.state in setOf("review", "prepared") && sender.isNotBlank() && facts.isNotBlank() && role.isNotBlank(), onClick = {
                         selected = contact; checked = false; draft = ReferralCsv.draft(contact.name, role, facts, sender)
                     }) { Text("Review referral draft") }
@@ -117,7 +118,6 @@ import java.util.Date
         }, dismissButton = {
             Column {
                 TextButton(enabled = !loading, onClick = { vm.referrals.mark(contact.profile, "blocked"); selected = null; revision++ }) { Text("Exclude this person") }
-                if (contact.state == "prepared") TextButton(enabled = !loading, onClick = { vm.referrals.mark(contact.profile, "sent"); selected = null; revision++ }) { Text("I already sent it — mark sent") }
                 TextButton(enabled = !loading, onClick = { selected = null }) { Text("Cancel") }
             }
         })

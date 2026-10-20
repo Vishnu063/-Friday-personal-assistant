@@ -1,10 +1,12 @@
-# 0.4.0
+# Changelog
 
 ## 0.5.0 — 20 October 2026
 
 - Added local LinkedIn referral review: bounded CSV import, recorded-history exclusions in either direction, identity checks, editable drafts and persistent prepared/sent/excluded states. Actual sending stays in LinkedIn.
 - Fixed speech-engine initialization being lost when stopped, retry after engine initialization failure and long-reply truncation. Added Unicode-safe chunk playback and cancellation coverage.
 - Added voice preview, visible diagnostic status and Stop controls. Device audio quality remains unverified; automated speech tests use Android simulations.
+
+## 0.4.0
 
 - Reviewed/editable voice dictation by default; live partial text where the provider supports it.
 - Tap/hold mic controls and explicit phrase collection for long dictation.

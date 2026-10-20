@@ -7,7 +7,7 @@ Open **Tools → Career dashboard → LinkedIn referral assistant**. This runs l
 3. Enter your own name, target role, accurate experience and availability. Friday does not invent experience, scrape job openings or add a resume automatically. Filter by person/company.
 4. Recorded history in **either direction** excludes a person even when message content is blank. Participant URLs are matched when present; name matches also exclude same-name contacts conservatively. Group participants are checked. Manually exclude anyone whose identity or history is uncertain.
 5. Open the person's profile, open their LinkedIn chat and check for prior contact, including archived conversations. Return to Friday, review/edit the draft and check the live-history confirmation only when satisfied. Copy the draft and send it yourself in LinkedIn.
-6. Return to the person's draft review and choose **I already sent it — mark sent**. Copying alone records **prepared**, never claims delivery. A prepared record warns against resending; it can be reopened if you need the draft. Sent/excluded people cannot prepare another draft. Friday does not send anything when you copy or mark a state.
+6. Return to the person's card and choose **I already sent it — mark sent**. Copying alone records **prepared**, never claims delivery. A prepared record warns against resending; it can be reopened if you need the draft. Sent/excluded people cannot prepare another draft. Friday does not send anything when you copy or mark a state.
 
 ## Important limits
 
