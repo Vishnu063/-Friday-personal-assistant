@@ -9,8 +9,8 @@ android {
         applicationId = "com.friday.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.6.0"
+        versionCode = 7
+        versionName = "0.7.0"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,6 +35,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.fragment:fragment-ktx:1.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
