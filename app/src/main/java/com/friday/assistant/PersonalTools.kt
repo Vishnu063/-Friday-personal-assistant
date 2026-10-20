@@ -26,12 +26,13 @@ private fun fields(entry: Entry) = runCatching { JSONObject(entry.text) }.getOrD
 @Composable private fun ToolCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content) }
 }
-@Composable fun CareerDashboard(vm: FridayModel, search: (String) -> Unit, followUp: (String) -> Unit) {
+@Composable fun CareerDashboard(vm: FridayModel, search: (String) -> Unit, referrals: () -> Unit, followUp: (String) -> Unit) {
     var company by rememberSaveable { mutableStateOf("") }; var role by rememberSaveable { mutableStateOf("DevOps Engineer") }
     var location by rememberSaveable { mutableStateOf("Pune") }; var url by rememberSaveable { mutableStateOf("") }
     var jd by rememberSaveable { mutableStateOf("") }; var comparison by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf("") }
     ToolPage("Your next role", "Track real opportunities and follow-ups. No automatic applications or invented hiring odds.") {
+        OutlinedButton(onClick = referrals) { Text("LinkedIn referral assistant") }
         ToolCard {
             Text("Find openings", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(location, { location = it }, label = { Text("Preferred location") }, modifier = Modifier.fillMaxWidth())

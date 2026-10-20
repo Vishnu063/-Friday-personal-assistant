@@ -4,13 +4,19 @@
 
 A calm, private space to talk, remember, plan and get things done. **No Ollama, OpenClaw, paid AI API key or always-on computer required.**
 
-> **Early Android preview (0.4).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
+> **Early Android preview (0.5).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**Verified v0.4 preview:** [download Friday 0.4.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39183421587/artifacts/12156913819). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
+**Previous verified v0.4 preview:** [download Friday 0.4.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39183421587/artifacts/12156913819). Tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone testing and private signing-key setup remain pending.
 
-## New in 0.4
+## New in 0.5
+
+**LinkedIn referral review** under Career imports your connection/message CSV exports, excludes recorded conversations in either direction and tracks prepared/sent/excluded contacts. Review history in LinkedIn and copy a personalized draft; actual sending remains in LinkedIn. Deleted/missing history cannot establish “never chatted.” [Referral guide](docs/REFERRALS.md).
+
+**Voice playback fixes:** full long replies are played in engine-sized parts rather than cut off at 3,900 characters; interruption no longer discards a queued TTS initialization callback; failed initialization can be retried. Settings has a selected-language voice preview and Stop audio. Diagnostics shows voice status and a Stop button. Android/JVM regression tests simulate engine callbacks; microphone hardware, audible quality and headset routing still need a phone. See [validation](docs/VALIDATION.md).
+
+## Previous additions in 0.4
 
 Editable voice review, live partial transcripts, tap/hold dictation, longer phrase collection, custom vocabulary, optional filler cleanup, bounded transcript history, recording feedback, audio-focus requests and AI idle memory controls. See [voice setup below](#voice-and-dictation-04). No new paid API.
 
@@ -52,7 +58,7 @@ A [signed-release workflow](docs/RELEASE_SIGNING.md) is prepared; its private si
 | Apps, calls & SMS | Open installed apps, open dialer, compose an SMS; final call/send stays in the selected phone app |
 | Documents | Import PDF/text (10 MB max, first 15 PDF pages), review text, local summary and read-aloud; scanned PDFs need OCR |
 | Camera & screenshots | Camera preview or selected image → on-device Latin/Hindi OCR → editable text |
-| Job helper | Saved resume text, transparent skill keyword comparison, application tracker with Saved/Applied state |
+| Job helper | Saved resume, skill keyword comparison, application tracker and local LinkedIn referral draft/history review; no automatic messages |
 | DevOps helper | Interview prompt and log-analysis chat; no shell access or automatic infrastructure changes |
 | Web | Open an explicit query in your browser; the local model has no live search tool |
 | Personalisation | Animated Friday orb, violet/mint accent, voice language and speech toggle |

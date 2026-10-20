@@ -20,6 +20,10 @@ import java.util.Locale
 /** Speech engines are created only when used and released on background/idle. */
 class Voice(private val context: Context, private val status: (String) -> Unit, private val result: (String) -> Unit, private val partial: (String) -> Unit = {}) {
     private val handler = Handler(Looper.getMainLooper())
+    // Timers can be cancelled without dropping a queued TTS initialization callback.
+    private val timers = Handler(Looper.getMainLooper())
+    private val chunks = ArrayDeque<String>()
+    private var playback = 0
     private var recognizer: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var pendingSpeech: String? = null
@@ -56,38 +60,47 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
     private fun createTts() {
         val generation = ++speechGeneration
         tts = TextToSpeech(context) { code -> handler.post {
-            if (!closed && foreground && generation == speechGeneration) {
+            if (!closed && generation == speechGeneration) {
                 ready = code == TextToSpeech.SUCCESS
                 val queued = pendingSpeech; pendingSpeech = null
-                if (!ready) status("Install an Android text-to-speech engine in phone Settings.") else if (queued != null) speak(queued)
+                if (!ready) {
+                    tts?.shutdown(); tts = null
+                    status("Install or select an Android text-to-speech engine, then retry.")
+                } else if (queued != null && foreground) speak(queued)
             }
         } }
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(id: String?) { handler.post { if (id == utterance && foreground) status("Speaking • tap mic to interrupt") } }
             override fun onDone(id: String?) { handler.post {
                 if (id == utterance && foreground && !closed) {
-                    status("Ready")
-                    if (conversation) handler.postDelayed({ if (conversation && foreground && id == utterance) listen() }, 600)
-                    else handler.postDelayed({ if (!conversation && id == utterance) releaseSpeech() }, 30000)
+                    if (chunks.isNotEmpty()) playChunk(TextToSpeech.QUEUE_ADD)
+                    else {
+                        status("Ready")
+                        if (conversation) timers.postDelayed({ if (conversation && foreground && id == utterance) listen() }, 600)
+                        else timers.postDelayed({ if (!conversation && id == utterance) releaseSpeech() }, 30000)
+                    }
                 }
             } }
-            @Deprecated("Android callback") override fun onError(id: String?) { handler.post { if (id == utterance) status("Speech playback failed. Check your voice engine.") } }
+            @Deprecated("Android callback") override fun onError(id: String?) { handler.post {
+                if (id == utterance && !closed) { chunks.clear(); utterance = ""; conversation = false; tts?.stop(); status("Speech playback failed. Check your voice engine and retry.") }
+            } }
         })
     }
     fun listen() {
         if (!foreground || closed) return
         if (offlineOnly && !onDevice) { status("On-device recognition is unavailable. Disable strict offline recognition or type instead."); return }
         endInput(); listening = true
-        utterance = ""; pendingSpeech = null
+        utterance = ""; pendingSpeech = null; chunks.clear()
         val currentSession = ++session
-        handler.removeCallbacksAndMessages(null); tts?.stop()
+        timers.removeCallbacksAndMessages(null); tts?.stop()
         recognizer?.cancel(); recognizer?.destroy(); recognizer = null
         if (!SpeechRecognizer.isRecognitionAvailable(context) && !onDevice) { endInput(); status("No speech recognizer installed. You can type instead."); return }
         if (quiet) {
             focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                 .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
                 .setOnAudioFocusChangeListener { change -> if (change < 0) stop() }.build()
-            audio.requestAudioFocus(focus!!)
+            val granted = runCatching { audio.requestAudioFocus(focus!!) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED }.getOrDefault(false)
+            if (!granted) { endInput(); status("Audio focus unavailable. Pause other media or turn off Ask other media to pause, then retry."); return }
         }
         recognizer = if (onDevice && Build.VERSION.SDK_INT >= 31) SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
         recognizer?.setRecognitionListener(object : RecognitionListener {
@@ -124,19 +137,36 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
     fun speak(text: String) {
         if (!foreground || closed || text.isBlank()) return
         if (listening) { session++; recognizer?.cancel(); recognizer?.destroy(); recognizer = null; endInput() }
-        if (tts == null) { pendingSpeech = text; createTts(); return }
+        if (tts == null) {
+            pendingSpeech = text
+            runCatching { createTts() }.onFailure { pendingSpeech = null; tts = null; ready = false; status("Could not start the speech engine. Check Android voice settings.") }
+            return
+        }
         if (!ready) { pendingSpeech = text; return }
         val engine = tts ?: return
+        timers.removeCallbacksAndMessages(null)
+        utterance = ""; chunks.clear(); engine.stop()
         if (engine.setLanguage(Locale.forLanguageTag(language)) < 0) { status("Install the $language voice in Android TTS settings."); return }
         if (offlineOnly) {
             val local = engine.voices?.firstOrNull { !it.isNetworkConnectionRequired && it.locale.language == Locale.forLanguageTag(language).language }
             if (local == null) { status("No offline TTS voice for $language. Install one in Android voice settings."); return }; engine.voice = local
         }
-        engine.setSpeechRate(rate); utterance = "friday-${session}-${System.nanoTime()}"
-        if (engine.speak(text.take(3900), TextToSpeech.QUEUE_FLUSH, null, utterance) == TextToSpeech.ERROR) status("Speech engine could not play this reply.")
+        engine.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        engine.setSpeechRate(rate.coerceIn(.6f, 1.4f))
+        chunks.addAll(SpeechText.chunks(text, TextToSpeech.getMaxSpeechInputLength()))
+        playChunk(TextToSpeech.QUEUE_FLUSH)
     }
-    fun stop() { endInput(); utterance = ""; pendingSpeech = null; session++; conversation = false; handler.removeCallbacksAndMessages(null); recognizer?.cancel(); recognizer?.destroy(); recognizer = null; tts?.stop(); status("Ready") }
+    private fun playChunk(mode: Int) {
+        val engine = tts ?: return
+        if (!foreground || closed || chunks.isEmpty()) return
+        utterance = "friday-${++playback}"
+        if (engine.speak(chunks.removeFirst(), mode, null, utterance) == TextToSpeech.ERROR) {
+            chunks.clear(); utterance = ""; conversation = false
+            status("Speech engine could not play this reply. Check Android voice settings.")
+        }
+    }
+    fun stop() { endInput(); utterance = ""; pendingSpeech = null; chunks.clear(); session++; conversation = false; timers.removeCallbacksAndMessages(null); recognizer?.cancel(); recognizer?.destroy(); recognizer = null; tts?.stop(); status("Ready") }
     fun releaseSpeech() { stop(); speechGeneration++; tts?.shutdown(); tts = null; ready = false }
     fun health() = "Recognition: ${if (onDevice) "on-device available" else if (SpeechRecognizer.isRecognitionAvailable(context)) "system provider available" else "missing"}\nTTS: ${if (ready) "loaded" else "loads when needed"}"
-    fun destroy() { releaseSpeech(); tone?.release(); tone = null; closed = true }
+    fun destroy() { closed = true; releaseSpeech(); handler.removeCallbacksAndMessages(null); tone?.release(); tone = null }
 }
