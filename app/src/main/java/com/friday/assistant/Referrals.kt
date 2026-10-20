@@ -132,6 +132,7 @@ class Referrals(context: Context) : SQLiteOpenHelper(context, "referrals.db", nu
         require(state in setOf("sent", "blocked"))
         transaction { db ->
             val contact = contacts().firstOrNull { it.profile == profile } ?: error("Connection not found.")
+            if (contact.state == state) return@transaction
             require(state == "blocked" || contact.state == "prepared") { "Review and copy the draft before marking it sent." }
             db.update("contacts", ContentValues().apply { put("state", state) }, "profile=?", arrayOf(profile))
         }

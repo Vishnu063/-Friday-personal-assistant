@@ -46,7 +46,7 @@ class ReferralsTest {
         book.importConnections(connections); book.importMessages("FROM,TO\n")
         val profile = "https://www.linkedin.com/in/mira"
         fails { book.mark(profile, "sent") }
-        book.prepare(profile); book.mark(profile, "sent")
+        book.prepare(profile); book.mark(profile, "sent"); book.mark(profile, "sent") // double tap is harmless
         book.importConnections(connections); book.close(); book = Referrals(context)
         assertEquals("sent", book.contacts().first { it.profile == profile }.state)
         fails { book.prepare(profile) }

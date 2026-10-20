@@ -8,6 +8,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -97,7 +99,7 @@ import java.util.Date
     }
     selected?.let { contact ->
         AlertDialog(onDismissRequest = { if (!loading) selected = null }, title = { Text("Review for ${contact.name}") }, text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Confirm this is the same person and account. If you see any earlier message, or cannot verify history, exclude them.")
                 OutlinedTextField(draft, { draft = it.take(4000) }, label = { Text("Message to copy") }, minLines = 3, maxLines = 7)
                 Row { Checkbox(checked, { checked = it }); Text("I checked this person's LinkedIn chat and found no previous message.", Modifier.weight(1f)) }
