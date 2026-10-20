@@ -1,5 +1,18 @@
 # Validation record
 
+## Friday 0.5.0 — 20 October 2026 (UTC)
+
+- Tested application source: `de6e63ddd1242b2082987e3695e69db71a6a9560`, merged through [PR #3](https://github.com/Vishnu063/-Friday-personal-assistant/pull/3). Later README/validation changes do not change app source.
+- [Successful workflow](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39446503816).
+- Command: `gradle testDebugUnitTest lintDebug assembleDebug --stacktrace`. All 43 unit tests, Android lint and APK assembly passed.
+- [Download Friday 0.5 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39446503816/artifacts/12276557093), 45,400,119 bytes compressed.
+- GitHub-reported ZIP SHA-256: `a40c71b721952ed7180f25385856c473aef9a660cdc5ae7977c675fd7bf70271`.
+- [Test and lint reports](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39446503816/artifacts/12276476947).
+
+Ten new speech tests exercise Android service simulations: interrupted initialization followed by another reply, complete long Hindi/English text, Unicode pair boundaries, cancellation of remaining parts, failed-initialization retry, background/destruction guards, missing-language errors, strict-offline recognition refusal, partial/final Hindi recognition results, duplicate/late callbacks and microphone-permission errors. Seven new referral tests cover incoming/outgoing/group/blank history, renamed-profile and same-name matches, malformed/unknown imports, ledger restart/reimport/double-tap behavior, erasure, quoted multiline CSV and fact-based drafts. Existing tests also pass.
+
+These tests use Robolectric speech simulations: **no actual microphone recording, audible voice quality, headset routing or phone RAM/battery was tested**. The background-session visibility fix and small-screen draft layout still need the device checklist. No live LinkedIn chat access, automatic sending or real referral messages are part of this app or its tests. Importing old/incomplete history cannot prove that a person has never chatted. Follow [referral review](REFERRALS.md) and [phone checks](DEVICE_TESTING.md). Export important data before changing debug signing identities; these are debug preview artifacts, not a stable-key release.
+
 ## Friday 0.4.0 — 19 October 2026 (UTC)
 
 - Tested application source commit: `ce55c48819de529b851c63893de34f83a54feb3a` (PR #2). Subsequent documentation changes link this build; they do not change application source.
