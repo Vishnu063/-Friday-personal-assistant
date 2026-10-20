@@ -76,3 +76,7 @@ Record model name, phone model, RAM, Android version, first-token latency, error
 - On a trusted computer, set up the read-only companion and trusted HTTPS endpoint. Pair the phone, verify the displayed account, check one known existing conversation and one uncertain/missing result. Test account changes, bad/expired token, unknown profile, failed TLS, redirect, timeout and disconnected computer. No unknown/empty result may approve sending.
 - Verify the phone stores no plaintext companion token in its preferences, excludes it from backups and clears it on Disconnect/Erase personal data. Actual Android Keystore and network/phone compatibility require this device test.
 - No automatic LinkedIn sending or background bulk checking is supported. No live LinkedIn session was used during CI.
+
+## 0.7 floating characters
+
+Run the [character and overlay acceptance checks](CHARACTERS.md#phone-acceptance-checks), including permission denial/revocation, app-lock routing, lock-screen hiding, drag/tap after rotation and every Stop path. CI service simulations do not verify a real system overlay.

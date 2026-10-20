@@ -488,6 +488,7 @@ class MainActivity : FragmentActivity() {
 
     @Composable private fun HomePage() {
         Page("Hello. What do you need?", "Quick tools first. AI only when you ask for it.") {
+            FridayCharacterAvatar(vm.characterId, Modifier.size(108.dp), animate = true)
             Button(onClick = { page = 0; mic() }, modifier = Modifier.fillMaxWidth().height(64.dp)) { Icon(Icons.Outlined.Mic, null); Spacer(Modifier.width(10.dp)); Text("Talk to Friday", style = MaterialTheme.typography.titleMedium) }
             OutlinedButton(onClick = { page = 0 }, modifier = Modifier.fillMaxWidth()) { Text("Type a message") }
             Hint("My day", "Your open tasks, without loading AI", Icons.Outlined.WbSunny) { vm.reply(vm.briefing()); page = 0 }
@@ -507,7 +508,7 @@ class MainActivity : FragmentActivity() {
             item {
                 if (!vm.privacyMode) TextButton(onClick = vm::loadSavedChat) { Text("Show saved history (up to 100 messages)") }
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    FridayOrb(vm.busy)
+                    FridayCharacterAvatar(vm.characterId, Modifier.size(130.dp), animate = true)
                     Text(if (vm.messages.isEmpty()) "A little help. A clearer day." else "Here when you need me.", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium)
                     Text(if (vm.brain.installed()) "Local AI • ${vm.modelName}" else "Tools ready • add a model for AI chat", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 8.dp))
                 }
@@ -528,18 +529,6 @@ class MainActivity : FragmentActivity() {
                 }
             }
             item { if (vm.busy) Column { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(vm.streaming.ifBlank { "Friday is thinking locally…" }, Modifier.padding(top = 10.dp)) } }
-        }
-    }
-    @Composable private fun FridayOrb(thinking: Boolean) {
-        val transition = rememberInfiniteTransition(label = "Friday breath")
-        val breath by transition.animateFloat(.78f, 1f, infiniteRepeatable(tween(if (thinking) 900 else 2400), RepeatMode.Reverse), label = "breath")
-        val tint = MaterialTheme.colorScheme.primary
-        Canvas(Modifier.size(130.dp)) {
-            val center = Offset(size.width / 2, size.height / 2)
-            drawCircle(Brush.radialGradient(listOf(tint.copy(alpha = .26f * breath), Color.Transparent), center, size.width / 2), size.width / 2, center)
-            drawCircle(tint.copy(alpha = .12f), 37.dp.toPx() * breath, center)
-            drawCircle(Brush.linearGradient(listOf(tint, Color(0xFF70E1D2))), 22.dp.toPx() * breath, center)
-            drawCircle(Color.White.copy(alpha = .6f), 5.dp.toPx(), center - Offset(6.dp.toPx(), 6.dp.toPx()))
         }
     }
     @Composable private fun Hint(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit) {
@@ -710,6 +699,7 @@ class MainActivity : FragmentActivity() {
         val info = remember { ActivityManager.MemoryInfo().also { getSystemService(ActivityManager::class.java).getMemoryInfo(it) } }
         val permissionsChanged = permissionEpoch
         Page("Make Friday yours", "Permissions stay optional. Your data stays under your control.") {
+            Panel("Friday character") { CharacterPanel(vm, ::requestNotifications) }
             Panel("Simple and light") {
                 SettingToggle("Compact AI context (recommended)", vm.compactMode, vm::compact)
                 Text("Compact: 2,048 tokens and shorter replies. Balanced: 4,096 tokens. Long document prompts use bounded excerpts. Smaller context can reduce reasoning/detail; model weight size still dominates RAM.", style = MaterialTheme.typography.bodySmall)

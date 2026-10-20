@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 — 21 October 2026 (India)
+
+- Added ten locally drawn boy/girl characters with persisted selection on Home and Chat.
+- Added an optional user-started floating character shortcut, drag/tap/Hide controls, ongoing notification Stop, lock-screen hiding and permission-revocation cleanup.
+- Floating character opens Friday Chat through its existing app-lock gate; it does not enable the microphone, read other apps or keep the model loaded.
+- Added selection, position and service lifecycle regression tests. Real-phone overlay/audio/battery checks remain required.
+
+
 ## 0.6.0 — 20 October 2026
 
 - Added experimental authenticated read-only LinkedIn companion and Android connection UI, with verified account/recipient binding, Android Keystore token encryption and explicit unknown-history results. No automatic sending.

@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -22,6 +24,9 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+        <service android:name=".CharacterOverlayService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started draggable character shortcut to open Friday, visible over other apps until explicitly stopped." />
+        </service>
         <service android:name=".VoiceSessionService" android:exported="false" android:foregroundServiceType="microphone" />
         <service android:name=".ScreenService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="true" android:label="Friday screen tools">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>

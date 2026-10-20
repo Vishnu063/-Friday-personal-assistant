@@ -15,6 +15,9 @@ import kotlinx.coroutines.CancellationException
 import java.io.File
 
 class FridayModel(application: Application) : AndroidViewModel(application) {
+    private val characterPrefs = CharacterPreferences(application)
+    var characterId by mutableStateOf(characterPrefs.selected.id); private set
+    fun character(id: String) { characterPrefs.select(id); characterId = characterPrefs.selected.id; CharacterOverlayService.refresh(getApplication()) }
     val store = Store(application)
     val referrals = Referrals(application)
     val linkedin = LinkedInConnection(application)
@@ -188,6 +191,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun erasePersonalData() {
         if (busy) return
         store.pendingTasks().forEach { Reminders.cancel(getApplication(), it.id) }
+        getApplication<Application>().stopService(android.content.Intent(getApplication(), CharacterOverlayService::class.java))
+        characterPrefs.clear(); characterId = characterPrefs.selected.id
         store.clear(); referrals.clear(); linkedin.disconnect(); DeviceChecks(getApplication()).clear(); lastDeleted = null; messages = emptyList(); refresh(); resume(""); draftDocument = ""; speechText = ""; ScreenService.cancelRead()
         notice = "Chats, notes, tasks, memories, trash, career/project/practice/referral data and resume erased. Remove the model separately in Settings."
     }
