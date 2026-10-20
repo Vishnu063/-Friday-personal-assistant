@@ -20,6 +20,11 @@ class CharacterTest {
     private lateinit var context: Application
     @Before fun setup() {
         context=RuntimeEnvironment.getApplication()
+        val receiverPermission = context.packageName + ".DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        val declared = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty()
+        assertTrue("Merged manifest must request AndroidX receiver permission", receiverPermission in declared)
+        // Android grants this app-defined signature permission on installation; Robolectric needs an explicit grant.
+        shadowOf(context).grantPermissions(receiverPermission)
         CharacterPreferences(context).clear()
         ShadowSettings.setCanDrawOverlays(false)
     }
