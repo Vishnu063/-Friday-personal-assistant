@@ -8,14 +8,14 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**Verified v0.6 preview:** [download Friday 0.6.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39472303833/artifacts/12287408835). Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone audio, live companion pairing and private signing-key setup remain pending.
+**Verified v0.7 preview:** [download Friday 0.7.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876). All 53 Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Floating-window appearance/behavior, phone audio, live LinkedIn pairing and private signing-key setup still require owner/device checks.
 
 ## New in 0.7
 
 - **Ten cute companions:** five boys and five girls, selected in Settings → Friday character, with a saved choice on Home and Chat and a Surprise me random selector.
 - **Floating Friday shortcut:** allow Display over other apps and notifications, then tap Start floating character. Minimize Friday; drag the character or tap it to open Chat. Hide/notification Stop ends the session. It hides on lock, respects app lock and does not activate the microphone. [Character setup and device checks](docs/CHARACTERS.md).
 
-The 0.7 build and real-phone checks are pending until recorded in [validation](docs/VALIDATION.md). The verified 0.6 download above remains available meanwhile.
+The 0.7 build passed CI. Enable the floating mascot in **Settings → Friday character**; grant overlay/notification access, then tap **Start floating character**. Real-phone overlay checks remain pending; see [validation](docs/VALIDATION.md).
 
 ## Previous additions in 0.6
 

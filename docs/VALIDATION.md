@@ -1,5 +1,18 @@
 # Validation record
 
+## Friday 0.7.0 — 21 October 2026 (India)
+
+- Tested application/companion source: `78dd597125c317f62b4e57f743d03106f8dcd14d`, merged through [PR #5](https://github.com/Vishnu063/-Friday-personal-assistant/pull/5). Later documentation-only changes do not change executable source.
+- [Successful workflow](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550).
+- Commands: `python3 -m unittest discover -s tests -v` and `gradle testDebugUnitTest lintDebug assembleDebug --stacktrace`. All 53 Android tests, four Python tests, lint and APK assembly passed.
+- [Download Friday 0.7 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876), 45,451,040 bytes compressed.
+- GitHub-reported ZIP SHA-256: `2d20219b8937cded2056fb2a5385bc4c0a7c7ca9ea17078613d3cc6078d66b1c`.
+- [Test and lint reports](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12296939154).
+
+Six new Robolectric tests cover ten selectable characters (five boys/five girls), persistence, unknown/corrupt selection recovery and erasure, reachable drag bounds, denied overlay access, foreground-service startup/task-removal cleanup and Stop without creating a window. Tests load the merged Android manifest, verify its AndroidX receiver permission declaration and simulate the installation-time signature permission grant. The floating service has no microphone, screen-reader or model reference.
+
+**No physical phone or visual rendering inspection was performed.** Actual character appearance, animation, dragging/tapping, protected screens, lock/unlock, permission revocation, accessibility, rotation and manufacturer background/battery behavior remain unverified on a device. The feature opens Friday Chat through the existing app-lock gate; it does not activate voice, run a second AI or promise uninterrupted overlay presence. Follow [character acceptance checks](CHARACTERS.md#phone-acceptance-checks). Existing phone audio/model/reminder/live LinkedIn checks remain pending. No private release key was provisioned; this remains a debug preview. Export important data before replacing an installation signed by a different key.
+
 ## Friday 0.6.0 — 20 October 2026 (UTC)
 
 - Tested application/companion source: `f905675b49e988789ce177ed2759dccba1122143`, merged through [PR #4](https://github.com/Vishnu063/-Friday-personal-assistant/pull/4). Later documentation changes do not change executable source.
@@ -80,4 +93,4 @@ This is an installable preview with tested repository logic, not a guarantee of 
 
 ## Previous version
 
-[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.6 artifact above.
+[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.7 artifact above.
