@@ -172,7 +172,12 @@ class CharacterView(context: Context) : View(context) {
             runCatching { context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName))) }
                 .onFailure { status = "Open Android Settings → Apps → Special app access → Display over other apps → Friday." }
         }) { Text("Allow display over other apps") }
-        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) TextButton(onClick = requestNotifications) { Text("Enable notifications for the Stop control") }
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) TextButton(onClick = {
+            if (android.os.Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                requestNotifications()
+            else runCatching { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }
+                .onFailure { status = "Enable Friday notifications in Android app settings." }
+        }) { Text("Enable notifications for the Stop control") }
         Button(onClick = {
             if (running) { context.stopService(Intent(context, CharacterOverlayService::class.java)); status = "Floating character stopped." }
             else status = CharacterOverlayService.start(context)
