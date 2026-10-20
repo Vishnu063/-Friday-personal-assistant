@@ -832,6 +832,7 @@ class MainActivity : FragmentActivity() {
                 OutlinedButton(enabled = !vm.busy && vm.brain.installed(), onClick = vm::testModel) { Text("Run compatibility and speed test") }
                 if (vm.busy) TextButton(onClick = { vm.brain.stop() }) { Text("Stop generation") }
             }
+            Panel("Acceptance checks & update identity") { DeviceChecksPanel() }
             Button(onClick = { refresh++ }) { Text("Refresh status") }
             Text("A successful model test confirms one short generation on this device, not answer accuracy or long-session stability.", style = MaterialTheme.typography.bodySmall)
         }

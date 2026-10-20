@@ -67,3 +67,12 @@ Record model name, phone model, RAM, Android version, first-token latency, error
 - Test a missing language pack, offline-only voice, denied microphone/audio focus, Bluetooth/wired input and returning from background. These are device/provider dependent.
 - Import test connection/message CSV files under Career → LinkedIn referral assistant. Verify incoming/outgoing/group/blank-message exclusions, prepared/sent/excluded persistence after restart, and malformed-file errors without data loss. Check small screens/large fonts and the keyboard in draft review. Copy a harmless test draft; Friday must not send it.
 - Verify Erase personal data clears referrals. A backup restore must not falsely report that the referral ledger was restored. Never bulk-test by sending real messages.
+
+
+## 0.6 acceptance and companion checks
+
+- Diagnostics → Acceptance checks: record Pass/Fail only after performing each test. Check restart persistence and retest status after an app update. Review the report before sharing it. CI does not complete this checklist.
+- Compare the installed signing fingerprint before an update. A debug preview is not proof of stable signing; owner release secrets remain separate.
+- On a trusted computer, set up the read-only companion and trusted HTTPS endpoint. Pair the phone, verify the displayed account, check one known existing conversation and one uncertain/missing result. Test account changes, bad/expired token, unknown profile, failed TLS, redirect, timeout and disconnected computer. No unknown/empty result may approve sending.
+- Verify the phone stores no plaintext companion token in its preferences, excludes it from backups and clears it on Disconnect/Erase personal data. Actual Android Keystore and network/phone compatibility require this device test.
+- No automatic LinkedIn sending or background bulk checking is supported. No live LinkedIn session was used during CI.

@@ -4,13 +4,21 @@
 
 A calm, private space to talk, remember, plan and get things done. **No Ollama, OpenClaw, paid AI API key or always-on computer required.**
 
-> **Early Android preview (0.5).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
+> **Early Android preview (0.6).** Native Kotlin + Jetpack Compose. The APK does not contain an AI model. Basic tools work immediately; AI chat needs a compatible model imported on the phone. Voice, model speed and accessibility behaviour need testing on your actual device. This is not a claim of ChatGPT-equivalent voice or reasoning.
 
 [Download build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/workflows/android.yml) · [Setup guide](docs/SETUP.md) · [Privacy](docs/PRIVACY.md) · [Device checklist](docs/DEVICE_TESTING.md) · [Architecture](docs/ARCHITECTURE.md)
 
-**Verified v0.5 preview:** [download Friday 0.5.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39446503816/artifacts/12276557093). All 43 unit tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone audio testing and private signing-key setup remain pending.
+**Previous verified v0.5 preview:** [download Friday 0.5.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39446503816/artifacts/12276557093). All 43 unit tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Physical-phone audio testing and private signing-key setup remain pending.
 
-## New in 0.5
+## New in 0.6
+
+- **Optional live LinkedIn check:** connect Friday to a read-only companion on your own computer, verify the displayed account and check a profile's available conversation results without CSV imports. This is experimental, unofficial and still needs a live-account trial. A missing conversation is marked unverified; actual sending remains in LinkedIn. The computer/HTTPS setup is required once; Friday never asks for a LinkedIn password. [Connection guide](docs/LINKEDIN_CONNECTION.md).
+- **Device acceptance checks:** Diagnostics now records your observed voice, mic, headset, reminder, model and layout results. They start untested, persist per app version and require retesting after an update. Preview a report before sharing it.
+- **Update identity:** Diagnostics shows debug/release status and the installed signing-certificate fingerprint. Stable signing still requires the owner's private release key; no secret was created or committed. [Signing setup](docs/RELEASE_SIGNING.md).
+
+The existing model compatibility/speed test, speech preview and reminder-delivery test remain available in Diagnostics. They require your phone; repository checks do not certify actual sound, model quality, battery or notification delivery.
+
+## Previous additions in 0.5
 
 **LinkedIn referral review** under Career imports your connection/message CSV exports, excludes recorded conversations in either direction and tracks prepared/sent/excluded contacts. Review history in LinkedIn and copy a personalized draft; actual sending remains in LinkedIn. Deleted/missing history cannot establish “never chatted.” [Referral guide](docs/REFERRALS.md).
 

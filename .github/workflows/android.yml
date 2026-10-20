@@ -25,6 +25,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
+      - name: Test read-only companion
+        run: python3 -m unittest discover -s tests -v
       - name: Test, lint and build debug APK
         run: gradle testDebugUnitTest lintDebug assembleDebug --stacktrace
       - name: Upload installable preview APK
