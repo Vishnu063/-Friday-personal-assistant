@@ -6,7 +6,7 @@ The companion uses [bcharleson/linkedincli](https://github.com/bcharleson/linked
 
 ## One-time computer setup
 
-Use a supported Node.js installation (Node 24 or newer) and Python 3.10+. Build the reviewed revision locally on that computer (Git and npm are also required):
+Use Linux or macOS with Node.js 24 or newer and Python 3.10+ (the bridge uses POSIX subprocess controls). Build the reviewed revision locally on that computer (Git and npm are also required):
 
 ```bash
 git clone https://github.com/bcharleson/linkedincli.git "$HOME/.local/share/friday-linkedin-cli"

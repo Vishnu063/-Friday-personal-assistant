@@ -1,5 +1,18 @@
 # Validation record
 
+## Friday 0.6.0 — 20 October 2026 (UTC)
+
+- Tested application/companion source: `f905675b49e988789ce177ed2759dccba1122143`, merged through [PR #4](https://github.com/Vishnu063/-Friday-personal-assistant/pull/4). Later documentation changes do not change executable source.
+- [Successful workflow](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39472303833).
+- Commands: `python3 -m unittest discover -s tests -v` and `gradle testDebugUnitTest lintDebug assembleDebug --stacktrace`. Four Python companion tests, Android unit tests, lint and APK assembly passed.
+- [Download Friday 0.6 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39472303833/artifacts/12287408835), 45,425,438 bytes compressed.
+- GitHub-reported ZIP SHA-256: `40698aa9b222aa5be99ed4e3711b1e3877ed8be02c10ea5bfe238434bf5b7689`.
+- [Test and lint reports](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39472303833/artifacts/12287783380).
+
+New Android tests cover HTTPS origin restrictions, account/recipient binding, conservative history states, owner-recorded device checks, persistence, erasure and required retesting after app updates. Python tests exercise real local HTTP authentication and rejected send routes, strict identity/history parsing, fixture subprocess timeouts, malformed/oversized output and secret redaction. No live LinkedIn session or external CLI login/build was performed. Pinned-source CLI installation instructions were checked against the reviewed source; owner installation and compatibility with changing unofficial LinkedIn endpoints remain unverified.
+
+**Physical phone audio/headsets, model speed/quality, actual reminder delivery, Keystore pairing, the owner's HTTPS network setup and a live LinkedIn account check remain pending.** Checklist results start untested and must be recorded by the owner. This update does not add automatic messages or certify complete archived/deleted history. No release key was provisioned; the APK is a debug preview. Export before replacing an installation with a different signing identity. See [connection setup](LINKEDIN_CONNECTION.md), [phone checks](DEVICE_TESTING.md) and [signing setup](RELEASE_SIGNING.md).
+
 ## Friday 0.5.0 — 20 October 2026 (UTC)
 
 - Tested application source: `de6e63ddd1242b2082987e3695e69db71a6a9560`, merged through [PR #3](https://github.com/Vishnu063/-Friday-personal-assistant/pull/3). Later README/validation changes do not change app source.
@@ -67,4 +80,4 @@ This is an installable preview with tested repository logic, not a guarantee of 
 
 ## Previous version
 
-[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.4 artifact above.
+[v0.1 successful build](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/38960112049) remains an earlier reference. Prefer the v0.6 artifact above.

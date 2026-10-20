@@ -45,7 +45,7 @@ Audio focus is requested only during recognition if enabled and abandoned on res
 
 ## Referral review (0.5)
 
-User-selected LinkedIn CSV files are processed locally. Raw CSV and message bodies are not saved. Normalized participant names/profile URLs, imported connection details, import times and prepared/sent/excluded states are held in a separate private SQLite database. They are not sent to AI or included in Friday backups. Erase personal data clears this database. Reviewed drafts are copied to the system clipboard only after your confirmation; you send in LinkedIn. Friday does not read LinkedIn account sessions, log in, scrape conversations or click Send. Reinstalling/erasing data loses local duplicate protection; reimport history and check the live conversation before contacting anyone.
+User-selected LinkedIn CSV files are processed locally. Raw CSV and message bodies are not saved. Normalized participant names/profile URLs, imported connection details, import times and prepared/sent/excluded states are held in a separate private SQLite database. They are not sent to AI or included in Friday backups. Erase personal data clears this database. Reviewed drafts are copied to the system clipboard only after your confirmation; you send in LinkedIn. CSV review does not access a LinkedIn session or click Send. The separately configured optional live companion is described below. Reinstalling/erasing data loses local duplicate protection; reimport history and check the live conversation before contacting anyone.
 
 
 ## Optional LinkedIn companion (0.6)
