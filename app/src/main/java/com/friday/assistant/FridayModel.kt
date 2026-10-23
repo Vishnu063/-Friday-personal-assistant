@@ -23,7 +23,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     val linkedin = LinkedInConnection(application)
     val brain = LocalBrain(application)
     private val prefs = application.getSharedPreferences("friday", 0)
-    var messages by mutableStateOf(store.chats(limit = 40)); private set
+    var messages by mutableStateOf(emptyList<ChatLine>()); private set
+    var historyVisible by mutableStateOf(false); private set
     var busy by mutableStateOf(false); private set
     var streaming by mutableStateOf(""); private set
     var notice by mutableStateOf("")
@@ -54,7 +55,8 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var revision by mutableIntStateOf(0); private set
     private var foreground = true
     fun foreground(value: Boolean) { foreground = value; if (!value) { speechText = ""; releaseAI() } }
-    fun loadSavedChat() { if (!privacyMode) messages = store.chats() }
+    fun loadSavedChat() { if (!privacyMode) { messages = store.chats(limit = 100); historyVisible = true } }
+    fun hideSavedChat() { messages = emptyList(); historyVisible = false }
     fun appLock(value: Boolean) { appLock = value; prefs.edit().putBoolean("appLock", value).apply() }
     fun compact(value: Boolean) { if (!busy) { compactMode = value; brain.compact = value; prefs.edit().putBoolean("compactMode", value).apply(); releaseAI() } }
     private fun scheduleRelease() {
@@ -72,7 +74,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         val records = store.entries(kind, limit = 12).filter { kind != "task" || !it.done }
         return if (records.isEmpty()) "No saved $kind items yet." else records.joinToString("\n") { "• ${it.text.take(200)}" }
     }
-    fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = if (value) emptyList() else store.chats(limit = 40); speechText = "" } }
+    fun privacy(value: Boolean) { if (!busy) { privacyMode = value; messages = emptyList(); historyVisible = false; speechText = "" } }
     fun offlineVoice(value: Boolean) { offlineVoice = value; prefs.edit().putBoolean("offlineVoice", value).apply() }
     fun backgroundVoice(value: Boolean) { backgroundVoice = value; prefs.edit().putBoolean("backgroundVoice", value).apply() }
     fun rate(value: Float) { speechRate = value.coerceIn(.6f, 1.4f); prefs.edit().putFloat("speechRate", speechRate).apply() }
@@ -83,7 +85,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         if (busy) return
         val count = store.import(data)
         if (data.resume.isNotBlank()) resume(data.resume)
-        refresh(); if (!privacyMode) messages = store.chats(limit = 40); reschedule()
+        refresh(); if (historyVisible && !privacyMode) messages = store.chats(limit = 100); reschedule()
         notice = "Restored $count new items. Duplicates skipped. Future task reminders scheduled; notification permission is still required."
     }
     fun saveStructured(kind: String, fields: Map<String, String>) { save(kind, org.json.JSONObject(fields).toString()) }
