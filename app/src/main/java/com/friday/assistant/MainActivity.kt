@@ -335,9 +335,37 @@ class MainActivity : FragmentActivity() {
         if (!getPreferences(0).getBoolean("speechDisclosure", false)) speechConsent = true else beginListening()
     }
     private fun requestNotifications() { if (Build.VERSION.SDK_INT >= 33) notifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
+    private fun quickRoutineAnswer(raw: String): String? {
+        val q = raw.trim().lowercase(java.util.Locale.ROOT)
+        val routine = com.friday.assistant.routine.SevenDayRoutine
+        val schedule = routine.schedule
+        val showAll = listOf("my routine", "daily routine", "my schedule", "today's schedule", "show routine", "show schedule").any { q.contains(it) }
+        if (showAll) return schedule.joinToString("\n") { "${it.time} — ${it.title}" }
+        val next = listOf("next activity", "what's next", "what is next", "what should i do now", "what do i do now", "next task").any { q.contains(it) }
+        if (next) {
+            val now = Calendar.getInstance()
+            val minutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+            val upcoming = schedule.firstOrNull { step ->
+                val parts = step.time.split(":")
+                parts[0].toInt() * 60 + parts[1].toInt() > minutes
+            }
+            return if (upcoming == null) "Your day is complete. Aim to sleep by 9 PM." else "Next at ${upcoming.time}: ${upcoming.title}."
+        }
+        if (q == "hello friday" || q == "hi friday" || q == "hello" || q == "hi" ||
+            q == "are you able to hear me" || q == "can you hear me") {
+            return "Yes, I can read your message. I'm ready to help with your routine, tasks or search."
+        }
+        return null
+    }
     private fun submit(raw: String) {
         if (raw.isBlank() || vm.busy) return
         voice.stop(); voice.conversation = voiceMode
+        val instant = quickRoutineAnswer(raw)
+        if (instant != null) {
+            vm.reply(instant)
+            page = 0
+            return
+        }
         when (val command = Commands.parse(raw)) {
             Command.Lock, Command.Power, Command.Screen -> phoneAction(command)
             Command.Briefing -> { page = 0; vm.reply(vm.briefing()) }
