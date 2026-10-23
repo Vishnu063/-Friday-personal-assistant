@@ -59,12 +59,14 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     fun compact(value: Boolean) { if (!busy) { compactMode = value; brain.compact = value; prefs.edit().putBoolean("compactMode", value).apply(); releaseAI() } }
     private fun scheduleRelease() {
         idleJob?.cancel()
-        if (!foreground) { releaseAI(); return }
+        if (!foreground) { if (!busy) releaseAI(); return }
         idleJob = viewModelScope.launch { delay(idleSeconds * 1000L); if (!busy) { brain.unload(); aiLoaded = false } }
     }
     fun releaseAI() {
-        idleJob?.cancel(); brain.stop()
-        viewModelScope.launch { brain.unload(); aiLoaded = false }
+        idleJob?.cancel()
+        // Do not cancel an active inference while Android briefly backgrounds the activity.
+        if (busy) return
+        viewModelScope.launch { if (!busy) { brain.unload(); aiLoaded = false } }
     }
     fun basicList(kind: String): String {
         val records = store.entries(kind, limit = 12).filter { kind != "task" || !it.done }
