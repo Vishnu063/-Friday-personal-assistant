@@ -51,7 +51,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
         listening = false; listeningReady = false; finishRequested = false; partial("")
         focus?.let { audio.abandonAudioFocusRequest(it) }; focus = null
     }
-    fun finishListening() { if (listening) { finishRequested = true; if (listeningReady) recognizer?.stopListening() } }
+    fun finishListening() { if (listening) { finishRequested = true; if (listeningReady) recognizer?.stopListening() else status("Starting microphone… please wait.") } }
     var foreground = true
     var conversation = false
     var language = "en-IN"
@@ -91,6 +91,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
         if (!foreground || closed) return
         if (offlineOnly && !onDevice) { status("On-device recognition is unavailable. Disable strict offline recognition or type instead."); return }
         endInput(); listening = true
+        status("Starting microphone…")
         utterance = ""; pendingSpeech = null; chunks.clear()
         val currentSession = ++session
         timers.removeCallbacksAndMessages(null); tts?.stop()
@@ -110,7 +111,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
                 status(if (onDevice && !preferSystemRecognizer) "Listening • on-device" else "Listening • system provider may use internet")
                 if (finishRequested) recognizer?.stopListening()
             } }
-            override fun onBeginningOfSpeech() = Unit
+            override fun onBeginningOfSpeech() { if (currentSession == session) status("Hearing you…") }
             override fun onRmsChanged(rmsdB: Float) = Unit
             override fun onBufferReceived(buffer: ByteArray?) = Unit
             override fun onEndOfSpeech() { if (currentSession == session) status("Transcribing…") }
