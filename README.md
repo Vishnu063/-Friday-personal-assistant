@@ -10,6 +10,12 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 **Verified v0.7 preview:** [download Friday 0.7.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876). All 53 Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Floating-window appearance/behavior, phone audio, live LinkedIn pairing and private signing-key setup still require owner/device checks.
 
+## Reliability improvement — active AI inference
+
+Friday now avoids calling the local model's stop/unload operation merely because the Android activity briefly moves to the background **while a response is being generated**. This targets a possible source of the reported **“Task cancelled”** behavior during transient app switches. Existing explicit user-initiated Stop and lifecycle cleanup remain separate. This is a focused source-code mitigation, **not proof** that all cancellations or device-specific crashes are fixed.
+
+**Validation still required:** GitHub Actions Android build, model compatibility test on the phone, microphone start/stop test, spoken response, app background/foreground during generation, and stable signing/backup before APK replacement. Search remains browser-based; there is no live web-answer summarizer or automatic routine reminders. A clean, legible font and a polished home layout remain design follow-ups.
+
 ## Search and AI response diagnostics (source update)
 
 - **Search tab** in the bottom navigation and a **Search the web** shortcut on Home open Google results in the phone browser. Search does not require a local AI model and does not inject web results into chat.
