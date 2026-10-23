@@ -10,6 +10,18 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 **Verified v0.7 preview:** [download Friday 0.7.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876). All 53 Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Floating-window appearance/behavior, phone audio, live LinkedIn pairing and private signing-key setup still require owner/device checks.
 
+## My Life — 5 AM routine (new source update)
+
+Friday's **Home screen** now contains a **My Life • 5 AM routine** card, above the Talk button. It shows:
+
+- Wake-up at **5:00 AM** and target bedtime at **9:00 PM** (8 hours).
+- Eight tappable daily habits with a progress bar and completion count.
+- An expandable full timetable, from morning movement and breakfast to DevOps practice, applications, family time and sleep.
+- A seven-day challenge for reset, energy, career, discipline, confidence, action and review.
+- On-device completion checkmarks saved separately by local calendar day using Android SharedPreferences. A new day begins with unchecked habits.
+
+The routine works **offline without an AI model or account**. It does not create automatic alarms, push notifications, calendar events or health measurements. The routine is a starter template and may need adjustment around work hours. No APK build or physical-device verification has been completed for this source update yet; use the latest successful GitHub Actions run after these commits to obtain a new build.
+
 ## New in 0.7
 
 - **Ten cute companions:** five boys and five girls, selected in Settings → Friday character, with a saved choice on Home and Chat and a Surprise me random selector.
