@@ -10,6 +10,14 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 **Verified v0.7 preview:** [download Friday 0.7.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876). All 53 Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Floating-window appearance/behavior, phone audio, live LinkedIn pairing and private signing-key setup still require owner/device checks.
 
+## Microphone opens and closes immediately — speech-provider fallback
+
+The voice recognizer now attempts a **single fallback** from Android's reported on-device speech provider to the system speech recognizer when the first provider returns client/server/busy/language errors. The recognizer's offline preference follows Friday's **Strict offline voice** setting instead of always forcing offline recognition. If strict offline is enabled, Friday does **not** silently switch to a potentially network-connected provider.
+
+If the microphone still closes immediately, check Android microphone permission for Friday, disable strict offline voice temporarily if you consent to using the system speech provider, install/update Android's speech recognition service and language packs, and inspect the status text displayed above Friday's chat input. A speech timeout or no-match after silence is normal; immediate error codes should be reported.
+
+**Status:** Source change committed; not yet build-tested or verified on a physical phone. A newly built APK must be installed before this fix can affect an existing Friday installation.
+
 ## My Life — 5 AM routine (new source update)
 
 Friday's **Home screen** now contains a **My Life • 5 AM routine** card, above the Talk button. It shows:
