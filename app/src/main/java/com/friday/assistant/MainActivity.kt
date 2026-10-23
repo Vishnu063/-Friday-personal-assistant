@@ -616,7 +616,7 @@ class MainActivity : FragmentActivity() {
         LaunchedEffect(vm.messages.size, vm.streaming.length) { if (vm.messages.isNotEmpty() || vm.streaming.isNotEmpty()) listState.animateScrollToItem((vm.messages.size + 1).coerceAtLeast(0)) }
         LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item {
-                if (!vm.privacyMode) TextButton(onClick = vm::loadSavedChat) { Text("Show saved history (up to 100 messages)") }
+                if (!vm.privacyMode) TextButton(onClick = { if (vm.historyVisible) vm.hideSavedChat() else vm.loadSavedChat() }) { Text(if (vm.historyVisible) "Hide history" else "View chat history") }
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     FridayCharacterAvatar(vm.characterId, Modifier.size(130.dp), animate = true)
                     Text(if (vm.messages.isEmpty()) "A little help. A clearer day." else "Here when you need me.", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium)
