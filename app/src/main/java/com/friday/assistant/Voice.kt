@@ -37,6 +37,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
     private var tone: ToneGenerator? = null
     private var finishRequested = false
     private var listeningReady = false
+    private var preferSystemRecognizer = false
     var listening = false; private set
     var sounds = false
     var quiet = false
@@ -102,11 +103,11 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
             val granted = runCatching { audio.requestAudioFocus(focus!!) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED }.getOrDefault(false)
             if (!granted) { endInput(); status("Audio focus unavailable. Pause other media or turn off Ask other media to pause, then retry."); return }
         }
-        recognizer = if (onDevice && Build.VERSION.SDK_INT >= 31) SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
+        recognizer = if (onDevice && !preferSystemRecognizer && Build.VERSION.SDK_INT >= 31) SpeechRecognizer.createOnDeviceSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context)
         recognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { if (currentSession == session) {
                 listeningReady = true; beep()
-                status(if (onDevice) "Listening • on-device" else "Listening • system provider may use internet")
+                status(if (onDevice && !preferSystemRecognizer) "Listening • on-device" else "Listening • system provider may use internet")
                 if (finishRequested) recognizer?.stopListening()
             } }
             override fun onBeginningOfSpeech() = Unit
@@ -116,6 +117,18 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
             override fun onError(error: Int) {
                 if (currentSession != session || !foreground || closed) return
                 session++; endInput()
+                // Some phones report an on-device provider but close it immediately.
+                // Retry once using Android's default recognizer, unless strict offline was requested.
+                if (onDevice && !preferSystemRecognizer && !offlineOnly &&
+                    (error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_SERVER ||
+                     error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || error == SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED ||
+                     error == SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE)) {
+                    preferSystemRecognizer = true
+                    recognizer?.destroy(); recognizer = null
+                    status("On-device speech unavailable. Trying system recognizer…")
+                    handler.post { if (foreground && !closed) listen() }
+                    return
+                }
                 status(when (error) { SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Didn't catch that. Tap mic to retry."; SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission is needed for voice."; else -> "Voice unavailable (code $error). Try typing or changing language." })
                 recognizer?.destroy(); recognizer = null
             }
@@ -131,7 +144,7 @@ class Voice(private val context: Context, private val status: (String) -> Unit, 
             }
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
         })
-        runCatching { recognizer?.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE, language).putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true).putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true).apply { if (Build.VERSION.SDK_INT >= 33) putStringArrayListExtra(RecognizerIntent.EXTRA_BIASING_STRINGS, ArrayList(vocabulary)) }) }
+        runCatching { recognizer?.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE, language).putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, offlineOnly).putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true).apply { if (Build.VERSION.SDK_INT >= 33) putStringArrayListExtra(RecognizerIntent.EXTRA_BIASING_STRINGS, ArrayList(vocabulary)) }) }
             .onFailure { recognizer?.destroy(); recognizer = null; endInput(); status("Could not start voice. Try typing.") }
     }
     fun speak(text: String) {
