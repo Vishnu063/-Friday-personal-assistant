@@ -10,6 +10,13 @@ A calm, private space to talk, remember, plan and get things done. **No Ollama, 
 
 **Verified v0.7 preview:** [download Friday 0.7.0 APK ZIP](https://github.com/Vishnu063/-Friday-personal-assistant/actions/runs/39496641550/artifacts/12297633876). All 53 Android unit tests, four Python companion tests, Android lint and APK build passed; [validation record](docs/VALIDATION.md). Floating-window appearance/behavior, phone audio, live LinkedIn pairing and private signing-key setup still require owner/device checks.
 
+## Search and AI response diagnostics (source update)
+
+- **Search tab** in the bottom navigation and a **Search the web** shortcut on Home open Google results in the phone browser. Search does not require a local AI model and does not inject web results into chat.
+- When local AI generation fails or is cancelled, Friday now adds an explanatory assistant message in chat rather than leaving only the user's message. It also displays a troubleshooting notice and points to **Diagnostics → model test**.
+- The screenshot symptom **“Task cancelled”** while transcribed user messages appear indicates the microphone may be working but the local AI generation is failing or interrupted. This update improves feedback; it does **not** prove the underlying model/runtime failure has been repaired.
+- These source changes still require a successful Android build and installation; the currently installed APK is unchanged until then.
+
 ## Microphone opens and closes immediately — speech-provider fallback
 
 The voice recognizer now attempts a **single fallback** from Android's reported on-device speech provider to the system speech recognizer when the first provider returns client/server/busy/language errors. The recognizer's offline preference follows Friday's **Strict offline voice** setting instead of always forcing offline recognition. If strict offline is enabled, Friday does **not** silently switch to a potentially network-connected provider.
