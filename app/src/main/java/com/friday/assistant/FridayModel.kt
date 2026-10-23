@@ -163,7 +163,13 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
             try {
                 val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) MemoryPolicy.select(question, store.memoryCandidates()) else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
                 reply(answer, !privateTurn, ai = true)
-            } catch (error: Exception) { notice = error.message?.take(240) ?: "Model could not answer. Try a smaller compatible model." }
+            } catch (error: CancellationException) {
+                notice = "AI response was cancelled. Try a shorter question, check Diagnostics → model test, or use Search."
+                messages = (messages + ChatLine("Friday", "I couldn't finish that response. My local AI was interrupted. Please try again or use Search.")).takeLast(40)
+            } catch (error: Exception) {
+                notice = "Local AI error: " + (error.message?.take(170) ?: "Try Diagnostics → model test.")
+                messages = (messages + ChatLine("Friday", "I couldn't generate a reply. Check Diagnostics → model test, or use Search for web results.")).takeLast(40)
+            }
             catch (error: LinkageError) { notice = "The local AI runtime is not compatible with this device. Other tools remain available." }
             finally { busy = false; streaming = ""; aiLoaded = brain.loaded; scheduleRelease() }
         }
