@@ -516,7 +516,7 @@ class MainActivity : FragmentActivity() {
                     Text("Day ${day.number} • ${day.focus}: ${day.action}", style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Text("Your checkmarks stay on this device and reset for each new day. Notifications are not yet enabled.", style = MaterialTheme.typography.labelSmall)
+            Text("Saved on this phone • New checklist each day • No automatic reminders yet", style = MaterialTheme.typography.labelSmall)
         }
     }
     @Composable private fun SearchPage() {
