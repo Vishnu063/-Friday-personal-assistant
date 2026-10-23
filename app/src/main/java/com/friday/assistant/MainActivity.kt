@@ -404,6 +404,7 @@ class MainActivity : FragmentActivity() {
                         3 -> ToolsPage()
                         5 -> CareerDashboard(vm, ::openSearchOrLink, { page = 10 }) { title -> pickDue { due -> requestNotifications(); vm.save("task", title, due); vm.notice = "Follow-up reminder saved." } }
                         10 -> ReferralAssistant(vm)
+                        11 -> SearchPage()
                         6 -> InterviewCoach(vm, { voice.speak(it) }, { page = 0; vm.ask(it, ephemeral = true) }, { target -> voiceTarget = target; voiceMode = false; mic() })
                         7 -> ProjectMemory(vm, ::openSearchOrLink)
                         8 -> DiagnosticsPage()
@@ -441,7 +442,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
-                    listOf(Triple("Home", Icons.Outlined.Home, 9), Triple("Tasks", Icons.Outlined.CheckCircleOutline, 1), Triple("Tools", Icons.Outlined.GridView, 3)).forEach { (name, icon, index) ->
+                    listOf(Triple("Home", Icons.Outlined.Home, 9), Triple("Search", Icons.Outlined.Search, 11), Triple("Tasks", Icons.Outlined.CheckCircleOutline, 1), Triple("Tools", Icons.Outlined.GridView, 3)).forEach { (name, icon, index) ->
                         NavigationBarItem(selected = page == index || (index == 9 && page == 0), onClick = { page = index }, icon = { Icon(icon, name) }, label = { Text(name) })
                     }
                 }
@@ -518,12 +519,38 @@ class MainActivity : FragmentActivity() {
             Text("Your checkmarks stay on this device and reset for each new day. Notifications are not yet enabled.", style = MaterialTheme.typography.labelSmall)
         }
     }
+    @Composable private fun SearchPage() {
+        var query by rememberSaveable { mutableStateOf("") }
+        Page("Search the web", "Open results in your browser. No AI model required.") {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it.take(300) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("What would you like to search?") },
+                singleLine = true
+            )
+            Button(
+                onClick = {
+                    val search = query.trim()
+                    if (search.isNotEmpty()) open(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=" + Uri.encode(search))))
+                },
+                enabled = query.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Outlined.Search, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Search Google")
+            }
+            Text("Search opens your browser. Friday does not read results or send them to the local model automatically.", style = MaterialTheme.typography.bodySmall)
+        }
+    }
     @Composable private fun HomePage() {
         Page("Hello. What do you need?", "Quick tools first. AI only when you ask for it.") {
             FridayCharacterAvatar(vm.characterId, Modifier.size(108.dp), animate = true)
             LifeRoutineCard()
             Button(onClick = { page = 0; mic() }, modifier = Modifier.fillMaxWidth().height(64.dp)) { Icon(Icons.Outlined.Mic, null); Spacer(Modifier.width(10.dp)); Text("Talk to Friday", style = MaterialTheme.typography.titleMedium) }
             OutlinedButton(onClick = { page = 0 }, modifier = Modifier.fillMaxWidth()) { Text("Type a message") }
+            Hint("Search the web", "Find answers in your browser without AI", Icons.Outlined.Search) { page = 11 }
             Hint("My day", "Your open tasks, without loading AI", Icons.Outlined.WbSunny) { vm.reply(vm.briefing()); page = 0 }
             Hint("Notes & memory", "Save an idea or find a preference", Icons.Outlined.Bookmarks) { page = 2 }
             Hint("Tools", "Phone, documents, career and projects", Icons.Outlined.GridView) { page = 3 }
