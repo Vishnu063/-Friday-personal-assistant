@@ -202,14 +202,26 @@ class MainActivity : FragmentActivity() {
         if (::voice.isInitialized) {
             val keepVoiceSession = backgroundSession && !vm.appLock
             voice.foreground = keepVoiceSession
-            if (!keepVoiceSession) { stopVoiceSession(); voice.releaseSpeech(); voiceMode = false; voiceTarget = null }
+            if (!keepVoiceSession) {
+                stopVoiceSession()
+                // Release microphone access when background listening is not enabled.
+                // Do not terminate a response that is already being generated.
+                voice.releaseSpeech()
+                voiceMode = false
+                voiceTarget = null
+            }
             if (vm.appLock) { sessionUnlocked = false; reviewedText = null; phraseBuffer = ""; originalTranscript = ""; reviewTarget = null; partialTranscript = "" }
             vm.foreground(keepVoiceSession)
         }
         super.onStop()
     }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); pendingIncoming = intent; inputVersion++ }
-    override fun onTrimMemory(level: Int) { super.onTrimMemory(level); if (::vm.isInitialized && level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) vm.releaseAI() }
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // Android can send low-memory callbacks during an active response.
+        // Do not unload the model while it is generating an answer.
+        if (::vm.isInitialized && !vm.busy && level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) vm.releaseAI()
+    }
     private fun consumeIncoming() {
         try { routeIncoming() } catch (_: Exception) { pendingIncoming = null; vm.notice = "Could not read that shared content. Try Android's file picker instead." }
     }
