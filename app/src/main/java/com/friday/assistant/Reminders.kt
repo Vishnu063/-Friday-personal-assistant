@@ -22,6 +22,63 @@ object Reminders {
     }
     fun cancel(context: Context, id: String) = (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(pending(context, id))
 }
+
+/** Optional repeating routine nudges. AlarmManager delivers even when the app UI is closed. */
+object RoutineReminders {
+    private const val PREFS = "friday_life_routine"
+    private const val KEY = "reminders_enabled"
+    fun enabled(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY, false)
+    fun setEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, enabled).apply()
+        if (enabled) schedule(context) else cancel(context)
+    }
+    private fun intent(context: Context, index: Int): PendingIntent =
+        PendingIntent.getBroadcast(context, 2000 + index,
+            Intent(context, RoutineReminderReceiver::class.java).putExtra("index", index),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    fun schedule(context: Context) {
+        if (!enabled(context)) return
+        val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        com.friday.assistant.routine.SevenDayRoutine.schedule.forEachIndexed { index, step ->
+            val parts = step.time.split(":")
+            val at = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, parts[0].toInt())
+                set(java.util.Calendar.MINUTE, parts[1].toInt())
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+                if (timeInMillis <= System.currentTimeMillis()) add(java.util.Calendar.DAY_OF_YEAR, 1)
+            }
+            alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, at.timeInMillis,
+                AlarmManager.INTERVAL_DAY, intent(context, index))
+        }
+    }
+    fun cancel(context: Context) {
+        val alarms = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        com.friday.assistant.routine.SevenDayRoutine.schedule.indices.forEach {
+            alarms.cancel(intent(context, it))
+        }
+    }
+}
+class RoutineReminderReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (!RoutineReminders.enabled(context)) return
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        val index = intent.getIntExtra("index", -1)
+        val step = com.friday.assistant.routine.SevenDayRoutine.schedule.getOrNull(index) ?: return
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(NotificationChannel("routine", "Friday daily routine", NotificationManager.IMPORTANCE_DEFAULT))
+        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        manager.notify(9000 + index, NotificationCompat.Builder(context, "routine")
+            .setSmallIcon(R.drawable.ic_friday)
+            .setContentTitle("Friday • " + step.time)
+            .setContentText(step.title)
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build())
+    }
+}
+
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val store = Store(context)
@@ -40,5 +97,6 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         val store = Store(context)
         try { store.pendingTasks().forEach { Reminders.schedule(context, it.id, it.due) } } finally { store.close() }
+        RoutineReminders.schedule(context)
     }
 }
