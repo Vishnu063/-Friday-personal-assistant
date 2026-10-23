@@ -520,9 +520,19 @@ class MainActivity : FragmentActivity() {
         val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(Date())
         var checked by remember(today) { mutableStateOf(preferences.getStringSet("done_$today", emptySet())?.toSet() ?: emptySet()) }
         var expanded by rememberSaveable { mutableStateOf(false) }
+        var routineAlerts by remember { mutableStateOf(RoutineReminders.enabled(this@MainActivity)) }
         val routine = com.friday.assistant.routine.SevenDayRoutine
         Panel("My Life • 5 AM routine") {
             Text("Wake 5:00 AM  •  Sleep 9:00 PM", color = MaterialTheme.colorScheme.primary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = routineAlerts, onCheckedChange = { enabled ->
+                    routineAlerts = enabled
+                    RoutineReminders.setEnabled(this@MainActivity, enabled)
+                    if (enabled) requestNotifications()
+                })
+                Spacer(Modifier.width(8.dp))
+                Text("Daily routine notifications", style = MaterialTheme.typography.bodyMedium)
+            }
             Text("Today: ${checked.size} / ${routine.habits.size} habits", style = MaterialTheme.typography.bodyMedium)
             LinearProgressIndicator(progress = { checked.size.toFloat() / routine.habits.size }, modifier = Modifier.fillMaxWidth())
             routine.habits.forEachIndexed { index, habit ->
@@ -544,7 +554,7 @@ class MainActivity : FragmentActivity() {
                     Text("Day ${day.number} • ${day.focus}: ${day.action}", style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Text("Saved on this phone • New checklist each day • No automatic reminders yet", style = MaterialTheme.typography.labelSmall)
+            Text("Saved on this phone • New checklist each day • Routine reminders are optional and may arrive late due to battery saving", style = MaterialTheme.typography.labelSmall)
         }
     }
     @Composable private fun SearchPage() {
