@@ -486,9 +486,42 @@ class MainActivity : FragmentActivity() {
         if (appChoices.isNotEmpty()) AlertDialog(onDismissRequest = { appChoices = emptyList() }, title = { Text("Which app?") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) { appChoices.forEach { (name, pkg) -> TextButton(onClick = { appChoices = emptyList(); packageManager.getLaunchIntentForPackage(pkg)?.let(::open) }) { Text(name) } } } }, confirmButton = { TextButton(onClick = { appChoices = emptyList() }) { Text("Cancel") } })
     }
 
+    @Composable private fun LifeRoutineCard() {
+        val preferences = remember { getSharedPreferences("friday_life_routine", Context.MODE_PRIVATE) }
+        val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(Date())
+        var checked by remember(today) { mutableStateOf(preferences.getStringSet("done_$today", emptySet())?.toSet() ?: emptySet()) }
+        var expanded by rememberSaveable { mutableStateOf(false) }
+        val routine = com.friday.assistant.routine.SevenDayRoutine
+        Panel("My Life • 5 AM routine") {
+            Text("Wake 5:00 AM  •  Sleep 9:00 PM", color = MaterialTheme.colorScheme.primary)
+            Text("Today: ${checked.size} / ${routine.habits.size} habits", style = MaterialTheme.typography.bodyMedium)
+            LinearProgressIndicator(progress = { checked.size.toFloat() / routine.habits.size }, modifier = Modifier.fillMaxWidth())
+            routine.habits.forEachIndexed { index, habit ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Checkbox(checked = index.toString() in checked, onCheckedChange = { value ->
+                        checked = if (value) checked + index.toString() else checked - index.toString()
+                        preferences.edit().putStringSet("done_$today", checked.toSet()).apply()
+                    })
+                    Text(habit, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Hide full timetable" else "View full timetable and 7-day challenge") }
+            if (expanded) {
+                routine.schedule.forEach { step ->
+                    Text("${step.time}  ${step.title}", style = MaterialTheme.typography.bodySmall)
+                }
+                Text("7-day challenge", fontWeight = FontWeight.SemiBold)
+                routine.challenge.forEach { day ->
+                    Text("Day ${day.number} • ${day.focus}: ${day.action}", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Text("Your checkmarks stay on this device and reset for each new day. Notifications are not yet enabled.", style = MaterialTheme.typography.labelSmall)
+        }
+    }
     @Composable private fun HomePage() {
         Page("Hello. What do you need?", "Quick tools first. AI only when you ask for it.") {
             FridayCharacterAvatar(vm.characterId, Modifier.size(108.dp), animate = true)
+            LifeRoutineCard()
             Button(onClick = { page = 0; mic() }, modifier = Modifier.fillMaxWidth().height(64.dp)) { Icon(Icons.Outlined.Mic, null); Spacer(Modifier.width(10.dp)); Text("Talk to Friday", style = MaterialTheme.typography.titleMedium) }
             OutlinedButton(onClick = { page = 0 }, modifier = Modifier.fillMaxWidth()) { Text("Type a message") }
             Hint("My day", "Your open tasks, without loading AI", Icons.Outlined.WbSunny) { vm.reply(vm.briefing()); page = 0 }
