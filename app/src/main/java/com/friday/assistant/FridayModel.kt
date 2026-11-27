@@ -46,6 +46,13 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
     var modelProgress by mutableStateOf(""); private set
     var modelDiagnostic by mutableStateOf("Not tested on this phone yet"); private set
     private var modelJob: Job? = null
+    private var replyJob: Job? = null
+    fun stopReply(): Job? {
+        val job = replyJob
+        job?.cancel()
+        brain.stop()
+        return job
+    }
     var appLock by mutableStateOf(prefs.getBoolean("appLock", false)); private set
     var compactMode by mutableStateOf(prefs.getBoolean("compactMode", true)); private set
     var aiLoaded by mutableStateOf(false); private set
@@ -110,7 +117,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         if (busy) return
         idleJob?.cancel(); brain.compact = compactMode
         busy = true; modelDiagnostic = "Loading and generating…"
-        viewModelScope.launch {
+        replyJob = viewModelScope.launch {
             val start = android.os.SystemClock.elapsedRealtime()
             var first = 0L
             try {
@@ -118,7 +125,7 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
                 modelDiagnostic = "Compatibility test passed • first text ${first}ms • total ${android.os.SystemClock.elapsedRealtime() - start}ms. Quality not assessed."
             } catch (error: Exception) { modelDiagnostic = "Test failed: ${error.message?.take(150)}" }
             catch (_: LinkageError) { modelDiagnostic = "Native runtime is unavailable on this device." }
-            finally { busy = false; aiLoaded = brain.loaded; scheduleRelease() }
+            finally { replyJob = null; busy = false; aiLoaded = brain.loaded; scheduleRelease() }
         }
     }
     init { store.pendingTasks().forEach { runCatching { Reminders.schedule(application, it.id, it.due) } } }
@@ -144,18 +151,18 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         refresh()
     }
     fun edit(entry: Entry, text: String) { if (text.isNotBlank()) { store.edit(entry, text.trim()); refresh() } }
-    fun reply(text: String, persist: Boolean = true, ai: Boolean = false) {
+    fun reply(text: String, persist: Boolean = true, ai: Boolean = false, speak: Boolean = true) {
         val role = if (ai) "Friday • AI suggestion" else "Friday"
         messages = (messages + ChatLine(role, text)).takeLast(40)
         if (persist && !privacyMode) store.chat(role, text)
-        speechText = ""; if (foreground) speechText = text
+        speechText = ""; if (foreground && speak) speechText = text
     }
     fun briefing(): String {
         val tasks = store.openTasks(8)
         val count = store.countOpenTasks()
         return if (tasks.isEmpty()) "Your task list is clear. What would you like to work on today?" else "You have $count open tasks:\n" + tasks.take(8).joinToString("\n") { "• ${it.text}" }
     }
-    fun ask(question: String, ephemeral: Boolean = false) {
+    fun ask(question: String, ephemeral: Boolean = false, onSpeech: ((String?, Boolean) -> Unit)? = null) {
         if (busy || question.isBlank()) return
         val privateTurn = ephemeral || privacyMode
         val history = if (privateTurn) emptyList() else store.chats(limit = 4)
@@ -163,19 +170,27 @@ class FridayModel(application: Application) : AndroidViewModel(application) {
         if (!privateTurn) store.chat("You", question)
         idleJob?.cancel(); brain.compact = compactMode
         busy = true; streaming = ""
-        viewModelScope.launch {
+        replyJob = viewModelScope.launch {
             try {
-                val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) MemoryPolicy.select(question, store.memoryCandidates()) else emptyList()) { partial -> withContext(Dispatchers.Main) { streaming = partial } }
-                reply(answer, !privateTurn, ai = true)
+                val answer = brain.answer(question, if (privateTurn) emptyList() else history, if (useMemory && !privateTurn) MemoryPolicy.select(question, store.memoryCandidates()) else emptyList()) { partial ->
+                    withContext(Dispatchers.Main) {
+                        streaming = partial
+                        onSpeech?.invoke(partial, false)
+                    }
+                }
+                reply(answer, !privateTurn, ai = true, speak = onSpeech == null)
+                onSpeech?.invoke(answer, true)
             } catch (error: CancellationException) {
+                onSpeech?.invoke(null, true)
                 notice = "AI response was cancelled. Try a shorter question, check Diagnostics → model test, or use Search."
                 messages = (messages + ChatLine("Friday", "I couldn't finish that response. My local AI was interrupted. Please try again or use Search.")).takeLast(40)
             } catch (error: Exception) {
+                onSpeech?.invoke(null, true)
                 notice = "Local AI error: " + (error.message?.take(170) ?: "Try Diagnostics → model test.")
                 messages = (messages + ChatLine("Friday", "I couldn't generate a reply. Check Diagnostics → model test, or use Search for web results.")).takeLast(40)
             }
-            catch (error: LinkageError) { notice = "The local AI runtime is not compatible with this device. Other tools remain available." }
-            finally { busy = false; streaming = ""; aiLoaded = brain.loaded; scheduleRelease() }
+            catch (error: LinkageError) { onSpeech?.invoke(null, true); notice = "The local AI runtime is not compatible with this device. Other tools remain available." }
+            finally { replyJob = null; busy = false; streaming = ""; aiLoaded = brain.loaded; scheduleRelease() }
         }
     }
     fun importModel(uri: Uri) {

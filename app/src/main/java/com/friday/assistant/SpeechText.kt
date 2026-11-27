@@ -2,6 +2,12 @@ package com.friday.assistant
 
 /** Preserve the full text and Unicode pairs while respecting the Android engine's input limit. */
 object SpeechText {
+    private val sentenceEnd = Regex("[.!?।॥！？。](?=\\s)|\\n")
+
+    /** Partial model output is cumulative. Keep the unfinished sentence for the next update. */
+    fun completePrefix(text: String, start: Int): Int =
+        sentenceEnd.findAll(text, start).lastOrNull()?.range?.last?.plus(1) ?: start
+
     fun chunks(text: String, limit: Int): List<String> {
         require(limit >= 2)
         if (text.isBlank()) return emptyList()
