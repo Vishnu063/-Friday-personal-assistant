@@ -312,7 +312,16 @@ class MainActivity : FragmentActivity() {
         if (target != null) target(text) else submit(text)
     }
     private fun beginListening() {
-        if (vm.busy) { vm.brain.stop(); vm.notice = "Stopping generation. Tap the mic again when it finishes."; return }
+        if (vm.busy) {
+            voice.stop()
+            val interrupted = vm.stopReply()
+            if (dictation.hold && voiceTarget == null) return
+            lifecycleScope.launch {
+                interrupted?.join() ?: return@launch
+                if (voice.foreground && sessionUnlocked && !vm.busy && !voice.listening) beginListening()
+            }
+            return
+        }
         voice.conversation = voiceMode
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             ensureBackgroundVoiceSession()
@@ -390,7 +399,12 @@ class MainActivity : FragmentActivity() {
             Command.Help -> vm.reply("I can save notes, remember preferences, manage tasks, set reminders, open apps, show your day and help with documents. Try: note buy groceries; remind me in 10 minutes to study; show my notes; what time is it. These work without AI. Phone actions still need Android permission/authentication.")
             Command.DateTime -> vm.reply(DateFormat.getDateTimeInstance().format(Date()))
             is Command.ListItems -> { page = if (command.kind == "task") 1 else 2; vm.reply(vm.basicList(command.kind)) }
-            Command.Chat -> vm.ask(raw)
+            Command.Chat -> {
+                if (vm.speakReplies) {
+                    val turn = voice.beginReply()
+                    vm.ask(raw, onSpeech = { text, finished -> voice.updateReply(turn, text, finished) })
+                } else vm.ask(raw)
+            }
         }
     }
     private fun chooseApp(name: String) {
@@ -478,7 +492,7 @@ class MainActivity : FragmentActivity() {
                                 })
                             }, contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Mic, "Hold to speak, release to finish") }
                         } else FilledIconButton(onClick = ::mic) { Icon(Icons.Outlined.Mic, "Tap to speak or finish") }
-                        IconButton(onClick = { if (vm.busy) vm.brain.stop() else { val text = input; input = ""; submit(text) } }) { Icon(if (vm.busy) Icons.Outlined.Stop else Icons.Outlined.Send, if (vm.busy) "Stop response" else "Send") }
+                        IconButton(onClick = { if (vm.busy) { voice.stop(); vm.stopReply() } else { val text = input; input = ""; submit(text) } }) { Icon(if (vm.busy) Icons.Outlined.Stop else Icons.Outlined.Send, if (vm.busy) "Stop response" else "Send") }
                     }
                 }
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
@@ -930,7 +944,7 @@ class MainActivity : FragmentActivity() {
             Panel("Local model") {
                 Text(vm.modelName); Text(vm.modelDiagnostic)
                 OutlinedButton(enabled = !vm.busy && vm.brain.installed(), onClick = vm::testModel) { Text("Run compatibility and speed test") }
-                if (vm.busy) TextButton(onClick = { vm.brain.stop() }) { Text("Stop generation") }
+                if (vm.busy) TextButton(onClick = { voice.stop(); vm.stopReply() }) { Text("Stop generation") }
             }
             Panel("Acceptance checks & update identity") { DeviceChecksPanel() }
             Button(onClick = { refresh++ }) { Text("Refresh status") }

@@ -117,6 +117,36 @@ class VoiceTest {
         assertTrue(chunks.all { it.length <= 4 && !Character.isHighSurrogate(it.last()) && !Character.isLowSurrogate(it.first()) })
         assertTrue(SpeechText.chunks("  ", 4).isEmpty())
     }
+    @Test fun speaksCompletedSentencesBeforeTheModelFinishes() {
+        val turn = voice.beginReply()
+        val shadow = initialize()
+        voice.updateReply(turn, "Version 1.2", false)
+        assertTrue(shadow.spokenTextList.isEmpty())
+
+        voice.updateReply(turn, "Version 1.2 is ready. अब", false)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(listOf("Version 1.2 is ready."), shadow.spokenTextList)
+
+        voice.updateReply(turn, "Version 1.2 is ready. अब आगे बढ़ें।", true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("Version 1.2 is ready. अब आगे बढ़ें।", shadow.spokenTextList.joinToString(""))
+    }
+
+    @Test fun interruptedReplyCannotQueueLateAudio() {
+        val turn = voice.beginReply()
+        val shadow = initialize()
+        voice.stop()
+
+        voice.updateReply(turn, "Late audio. Ignore this.", true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(shadow.spokenTextList.isEmpty())
+
+        val next = voice.beginReply()
+        voice.updateReply(next, "New reply.", true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(listOf("New reply."), shadow.spokenTextList)
+    }
+
     private fun recognitionProvider() {
         val service = ResolveInfo().apply { serviceInfo = ServiceInfo().apply { packageName = "test.speech"; name = "Recognizer" } }
         shadowOf(context.packageManager).addResolveInfoForIntent(Intent(RecognitionService.SERVICE_INTERFACE), service)
